@@ -125,9 +125,9 @@ export default function LandingPage() {
             <a href="#how-it-works" className="text-[#4B5563] hover:text-amber-600 transition-colors duration-150 text-sm font-medium">
               Comment ça marche
             </a>
-            <a href="#testimonials" className="text-[#4B5563] hover:text-amber-600 transition-colors duration-150 text-sm font-medium">
-              Témoignages
-            </a>
+            <Link href="/blog" className="text-[#4B5563] hover:text-amber-600 transition-colors duration-150 text-sm font-medium">
+              Blog
+            </Link>
             <Link href="/demo" className="text-[#4B5563] hover:text-amber-600 transition-colors duration-150 text-sm font-medium">
               Démo
             </Link>
@@ -166,9 +166,9 @@ export default function LandingPage() {
             <a href="#how-it-works" className="block text-[#4B5563] hover:text-amber-600 py-2 font-medium" onClick={() => setMobileMenuOpen(false)}>
               Comment ça marche
             </a>
-            <a href="#testimonials" className="block text-[#4B5563] hover:text-amber-600 py-2 font-medium" onClick={() => setMobileMenuOpen(false)}>
-              Témoignages
-            </a>
+            <Link href="/blog" className="block text-[#4B5563] hover:text-amber-600 py-2 font-medium" onClick={() => setMobileMenuOpen(false)}>
+              Blog
+            </Link>
             <Link href="/demo" className="block text-[#4B5563] hover:text-amber-600 py-2 font-medium" onClick={() => setMobileMenuOpen(false)}>
               Démo
             </Link>
@@ -657,7 +657,7 @@ export default function LandingPage() {
               <h4 className="font-semibold text-[#1F2937] mb-4 text-sm uppercase tracking-wide">Produit</h4>
               <ul className="space-y-2">
                 <li><Link href="/demo" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Démo Interactive</Link></li>
-                <li><Link href="#features" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Nos Services</Link></li>
+                <li><Link href="/blog" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Blog</Link></li>
                 <li><Link href="/register?role=garage" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Devenir garage</Link></li>
               </ul>
             </div>

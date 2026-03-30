@@ -34,6 +34,7 @@ model User {
   sessions          Session[]
   transfersFrom     VehicleTransfer[] @relation("TransferFrom")
   transfersTo       VehicleTransfer[] @relation("TransferTo")
+  blogPosts         BlogPost[]
 
   @@index([email])
   @@index([role])
@@ -429,4 +430,36 @@ model ValueHistory {
 
   @@index([vehicleId])
   @@index([recordedAt])
+}
+
+// ============================================================================
+// BLOG POSTS - Articles de blog pour SEO et éducation
+// ============================================================================
+model BlogPost {
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  content         String   // Contenu en Markdown ou HTML
+  excerpt         String?  // Résumé court pour les listes
+  coverImage      String?  // URL de l'image de couverture
+  category        String   // conseils, actualites, guides, temoignages
+  tags            String?  // JSON array: ["entretien", "assurance", "ct"]
+  status          String   @default("draft") // draft, published, archived
+  authorId        String
+  publishedAt     DateTime?
+  viewCount       Int      @default(0)
+  readingTime     Int      @default(5) // Temps de lecture en minutes
+  metaTitle       String?  // Titre SEO
+  metaDescription String? // Description SEO
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  author          User     @relation(fields: [authorId], references: [id])
+
+  @@index([slug])
+  @@index([status])
+  @@index([category])
+  @@index([publishedAt])
+  @@index([authorId])
 }
