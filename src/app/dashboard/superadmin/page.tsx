@@ -38,7 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Loader2, Search, RefreshCw, Plus, Sparkles, Users, UserPlus, Eye, Key } from 'lucide-react'
+import { Loader2, Search, RefreshCw, Plus, Sparkles, Users, UserPlus, Eye, Key, CheckCircle, XCircle, QrCode } from 'lucide-react'
 
 // Composants OKAR
 import { SuperAdminSidebar } from '@/components/okar/superadmin/SuperAdminSidebar'
@@ -178,8 +178,8 @@ function SuperAdminDashboardContent() {
         const data = await response.json()
         setGarages(data.garages)
         
-        // Créer les marqueurs pour la carte
-        const markers: MapMarker[] = data.garages
+        // Créer les marqueurs pour la carte - garages avec coordonnées
+        const garageMarkers: MapMarker[] = data.garages
           .filter((g: Garage) => g.latitude && g.longitude)
           .map((g: Garage) => ({
             id: g.id,
@@ -194,7 +194,8 @@ function SuperAdminDashboardContent() {
               rating: g.rating,
             },
           }))
-        setMapMarkers(markers)
+        
+        setMapMarkers(garageMarkers)
       }
     } catch (error) {
       console.error('Erreur lors du chargement des garages:', error)
@@ -527,6 +528,60 @@ function SuperAdminDashboardContent() {
     } else {
       const error = await response.json()
       throw new Error(error.error || 'Erreur lors de la suppression')
+    }
+  }
+
+  // Suspendre un utilisateur
+  const handleSuspendUser = async (userId: string) => {
+    const response = await fetch('/api/superadmin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ action: 'toggleApproval', userId }),
+    })
+    if (response.ok) {
+      loadUsers()
+      loadStats()
+    } else {
+      const error = await response.json()
+      throw new Error(error.error || 'Erreur lors de la suspension')
+    }
+  }
+
+  // Réactiver un utilisateur
+  const handleReactivateUser = async (userId: string) => {
+    const response = await fetch('/api/superadmin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ action: 'toggleApproval', userId }),
+    })
+    if (response.ok) {
+      loadUsers()
+      loadStats()
+    } else {
+      const error = await response.json()
+      throw new Error(error.error || 'Erreur lors de la réactivation')
+    }
+  }
+
+  // Réinitialiser le mot de passe d'un utilisateur
+  const handleResetUserPassword = async (userId: string) => {
+    // Générer un nouveau mot de passe
+    const newPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase() + '!1'
+    
+    const response = await fetch('/api/superadmin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ action: 'resetPassword', userId, userData: { password: newPassword } }),
+    })
+    if (response.ok) {
+      // Afficher le nouveau mot de passe à l'admin
+      alert(`Nouveau mot de passe généré: ${newPassword}\n\nVeuillez le communiquer à l'utilisateur.`)
+    } else {
+      const error = await response.json()
+      throw new Error(error.error || 'Erreur lors de la réinitialisation')
     }
   }
 
@@ -1103,44 +1158,106 @@ function SuperAdminDashboardContent() {
             </div>
           )}
 
-          {/* Audit */}
+          {/* Audit - Grille de cartes */}
           {activeTab === 'audit' && (
-            <Card className="bg-[#1E293B] rounded-2xl border border-[#334155] shadow-lg overflow-hidden">
-              <CardHeader className="border-b border-[#334155]/50">
-                <CardTitle className="text-white text-lg font-semibold">Logs d'Audit</CardTitle>
-                <CardDescription className="text-[#64748B]">
-                  Historique des actions sur la plateforme
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar">
-                  {auditLogs.slice(0, 20).map((log) => (
-                    <div key={log.id} className="flex items-center justify-between p-4 bg-[#0F172A]/50 rounded-xl border border-[#334155]/50 hover:bg-[#0F172A]/70 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-2.5 h-2.5 rounded-full ${
-                          log.action.includes('VALIDATED') ? 'bg-[#10B981] shadow-[#10B981]/50' :
-                          log.action.includes('REJECTED') ? 'bg-[#EF4444] shadow-[#EF4444]/50' :
-                          log.action.includes('GENERATED') ? 'bg-[#06B6D4] shadow-[#06B6D4]/50' :
-                          'bg-[#EC4899] shadow-[#EC4899]/50'
-                        } shadow-lg`} />
-                        <div>
-                          <p className="text-white font-medium">{log.action}</p>
-                          <p className="text-[#64748B] text-sm">
-                            {log.entityType}: <span className="font-mono">{log.entityId}</span>
-                          </p>
-                        </div>
+            <div className="space-y-6">
+              {/* Stats rapides */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="bg-slate-800/40 backdrop-blur-md rounded-xl border border-white/10 shadow-lg">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="h-5 w-5 text-emerald-400" />
                       </div>
-                      <div className="text-right">
-                        <p className="text-[#94A3B8] text-sm font-medium">{log.user?.name || 'Système'}</p>
-                        <p className="text-[#64748B] text-xs">
-                          {new Date(log.createdAt).toLocaleString('fr-FR')}
-                        </p>
+                      <div>
+                        <p className="text-2xl font-bold text-white">{auditLogs.filter(l => l.action.includes('VALIDATED')).length}</p>
+                        <p className="text-xs text-slate-400">Validations</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+                <Card className="bg-slate-800/40 backdrop-blur-md rounded-xl border border-white/10 shadow-lg">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                        <XCircle className="h-5 w-5 text-red-400" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-white">{auditLogs.filter(l => l.action.includes('REJECTED') || l.action.includes('DELETED')).length}</p>
+                        <p className="text-xs text-slate-400">Rejets/Suppressions</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-slate-800/40 backdrop-blur-md rounded-xl border border-white/10 shadow-lg">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                        <QrCode className="h-5 w-5 text-cyan-400" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-white">{auditLogs.filter(l => l.action.includes('GENERATED')).length}</p>
+                        <p className="text-xs text-slate-400">Générations QR</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-slate-800/40 backdrop-blur-md rounded-xl border border-white/10 shadow-lg">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-pink-500/20 rounded-lg flex items-center justify-center">
+                        <Users className="h-5 w-5 text-pink-400" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-white">{auditLogs.length}</p>
+                        <p className="text-xs text-slate-400">Total Actions</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Grille de logs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                {auditLogs.slice(0, 30).map((log) => (
+                  <Card key={log.id} className="bg-slate-800/40 backdrop-blur-md rounded-xl border border-white/10 shadow-lg hover:border-white/20 transition-all duration-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                            log.action.includes('VALIDATED') ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' :
+                            log.action.includes('REJECTED') || log.action.includes('DELETED') ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' :
+                            log.action.includes('GENERATED') ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]' :
+                            log.action.includes('CREATED') ? 'bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]' :
+                            'bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.5)]'
+                          }`} />
+                          <div className="min-w-0">
+                            <p className="text-white font-medium text-sm truncate">{log.action}</p>
+                            <p className="text-slate-400 text-xs mt-1">
+                              {log.entityType}: <span className="font-mono text-slate-300">{log.entityId.substring(0, 8)}...</span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
+                        <p className="text-slate-300 text-xs font-medium">{log.user?.name || 'Système'}</p>
+                        <p className="text-slate-500 text-xs">
+                          {new Date(log.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {auditLogs.length === 0 && (
+                <Card className="bg-slate-800/40 backdrop-blur-md rounded-2xl border border-white/10 shadow-lg">
+                  <CardContent className="p-12 text-center">
+                    <p className="text-slate-400">Aucun log d'audit disponible</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
 
           {/* Utilisateurs - Grille de cartes */}
@@ -1253,6 +1370,9 @@ function SuperAdminDashboardContent() {
                     <UserCard
                       key={userData.id}
                       user={userData}
+                      onSuspend={handleSuspendUser}
+                      onReactivate={handleReactivateUser}
+                      onResetPassword={handleResetUserPassword}
                       onDelete={handleDeleteUser}
                     />
                   ))}
