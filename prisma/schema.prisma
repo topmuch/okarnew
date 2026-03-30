@@ -1,0 +1,420 @@
+// OKAR - Passeport Numérique Automobile
+// Schéma de base de données complet
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// UTILISATEURS - Système multi-rôles
+// ============================================================================
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  passwordHash      String
+  name              String?
+  phone             String?
+  role              String   @default("driver") // superadmin, garage_certified, garage_pending, driver
+  isApproved        Boolean  @default(false)    // Pour validation des garages
+  subscriptionStatus String  @default("free")   // free, premium
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  vehicles          Vehicle[]
+  garage            Garage?
+  maintenanceRecords MaintenanceRecord[]
+  auditLogs         AuditLog[]
+  payments          Payment[]
+  sessions          Session[]
+  transfersFrom     VehicleTransfer[] @relation("TransferFrom")
+  transfersTo       VehicleTransfer[] @relation("TransferTo")
+
+  @@index([email])
+  @@index([role])
+}
+
+// ============================================================================
+// GARAGES - Centres automobiles certifiés
+// ============================================================================
+model Garage {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  businessName    String
+  address         String
+  city            String
+  phone           String
+  latitude        Float?
+  longitude       Float?
+  isActive        Boolean  @default(true)   // Peut être suspendu par superadmin
+  certificationDate DateTime?
+  rating          Float    @default(0)
+  totalClients    Int      @default(0)
+  totalRevenue    Float    @default(0)
+  
+  // Nouveaux champs pour le dashboard garage
+  subscriptionPlan     String   @default("free")     // free, premium, pro
+  subscriptionStatus   String   @default("active")   // active, suspended, expired
+  subscriptionExpiry   DateTime?
+  specialties          String?                       // JSON array: ["moteur", "carrosserie", "electricite"]
+  workingHours         String?                       // JSON object: {monday: {open: "08:00", close: "18:00"}, ...}
+  photos               String?                       // JSON array of URLs
+  publicDescription    String?                       // Description publique du garage
+  websiteUrl           String?                       // Site web du garage
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  qrCodes         QRCode[]
+  vehicles        Vehicle[]
+  interventions   MaintenanceRecord[]
+  badges          GarageBadge[]
+  clients         GarageClient[]
+
+  @@index([city])
+  @@index([isActive])
+}
+
+// ============================================================================
+// VÉHICULES - Dossiers automobiles
+// ============================================================================
+model Vehicle {
+  id              String   @id @default(cuid())
+  plateNumber     String   @unique
+  brand           String
+  model           String
+  year            Int?
+  color           String?
+  vin             String?
+  mileage         Int      @default(0)
+  qrCodeId        String?  @unique
+  ownerId         String
+  garageId        String?
+  technicalControlDate DateTime?
+  technicalControlStatus String @default("valid") // valid, expiring soon, expired
+  insuranceExpiryDate   DateTime?
+  insuranceStatus       String @default("valid")
+  healthScore     Int      @default(100) // 0-100
+  transferCode    String?  // Code à 6 chiffres pour transfert
+  transferExpiry  DateTime?
+  nextOilChangeMileage Int? // Prochain kilométrage de vidange
+  nextOilChangeDate DateTime? // Prochaine date de vidange estimée
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Nouveaux champs pour les stats
+  estimatedValue    Int?      @default(0)    // Valeur estimée en FCFA
+  resaleScore       Int?      @default(0)    // Score de revente /100
+  lastStatsUpdate   DateTime?                // Dernière mise à jour des stats
+
+  // Relations
+  owner           User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  garage          Garage?           @relation(fields: [garageId], references: [id])
+  qrCode          QRCode?
+  maintenanceHistory MaintenanceRecord[]
+  alerts          VehicleAlert[]
+  transfers       VehicleTransfer[]
+  stats           VehicleStats?
+  valueHistory    ValueHistory[]
+
+  @@index([plateNumber])
+  @@index([ownerId])
+  @@index([qrCodeId])
+}
+
+// ============================================================================
+// QR CODES - Identification unique des véhicules
+// ============================================================================
+model QRCode {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  lotId           String   // Identifiant du lot de génération
+  type            String   @default("particulier") // particulier, garage
+  status          String   @default("stock") // stock, active, lost
+  assignedGarageId String?
+  vehicleId       String?  @unique
+  // Infos du client après activation
+  activatedByName  String?
+  activatedByEmail String?
+  activatedByPhone String?
+  createdAt       DateTime @default(now())
+  activatedAt     DateTime?
+
+  // Relations
+  assignedGarage  Garage?  @relation(fields: [assignedGarageId], references: [id])
+  vehicle         Vehicle? @relation(fields: [vehicleId], references: [id])
+
+  @@index([code])
+  @@index([status])
+  @@index([lotId])
+  @@index([type])
+}
+
+// ============================================================================
+// INTERVENTIONS - Carnet d'entretien complet
+// ============================================================================
+model MaintenanceRecord {
+  id              String   @id @default(cuid())
+  vehicleId       String
+  garageId        String
+  createdByUserId String
+  type            String   // oil_change, major_repair, accident, inspection, tire_change, battery
+  title           String
+  description     String?
+  mileage         Int
+  cost            Float?
+  // Données structurées selon le type
+  oilType         String?  // Pour vidange
+  oilQuantity     String?
+  parts           String?  // JSON array des pièces
+  photos          String?  // JSON array des URLs photos
+  invoiceUrl      String?
+  isOwnerValidated Boolean @default(false)
+  ownerValidationDate DateTime?
+  
+  // Nouveaux champs pour la gestion des interventions
+  status               String   @default("pending")    // pending, validated, rejected, in_progress
+  validationDate       DateTime?
+  validationNotes      String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  vehicle         Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  garage          Garage   @relation(fields: [garageId], references: [id])
+  createdBy       User     @relation(fields: [createdByUserId], references: [id])
+
+  @@index([vehicleId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([status])
+}
+
+// ============================================================================
+// ALERTES - Notifications véhicules
+// ============================================================================
+model VehicleAlert {
+  id              String   @id @default(cuid())
+  vehicleId       String
+  type            String   // ct_expiry, insurance_expiry, maintenance_due
+  message         String
+  severity        String   @default("info") // info, warning, critical
+  isRead          Boolean  @default(false)
+  isResolved      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  resolvedAt      DateTime?
+
+  // Relations
+  vehicle         Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@index([isRead])
+}
+
+// ============================================================================
+// PAIEMENTS - Rapports payants
+// ============================================================================
+model Payment {
+  id              String   @id @default(cuid())
+  userId          String?
+  plateNumber     String
+  amount          Float
+  currency        String   @default("XOF")
+  paymentMethod   String   // orange_money, wave, card
+  status          String   @default("pending") // pending, completed, failed
+  reportUrl       String?  // URL du PDF généré
+  createdAt       DateTime @default(now())
+  completedAt     DateTime?
+
+  // Relations
+  user            User?    @relation(fields: [userId], references: [id])
+
+  @@index([plateNumber])
+  @@index([status])
+}
+
+// ============================================================================
+// AUDIT LOGS - Traçabilité complète
+// ============================================================================
+model AuditLog {
+  id              String   @id @default(cuid())
+  userId          String?
+  action          String
+  entityType      String
+  entityId        String
+  details         String?  // JSON
+  ipAddress       String?
+  createdAt       DateTime @default(now())
+
+  // Relations
+  user            User?    @relation(fields: [userId], references: [id])
+
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// SESSIONS - Authentification sécurisée
+// ============================================================================
+model Session {
+  id              String   @id @default(cuid())
+  userId          String
+  token           String   @unique
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+// ============================================================================
+// SETTINGS - Paramètres de l'application
+// ============================================================================
+model Settings {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  value           String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([key])
+}
+
+// ============================================================================
+// GARAGE BADGES - Gamification & Réputation
+// ============================================================================
+model GarageBadge {
+  id              String   @id @default(cuid())
+  garageId        String
+  badgeType       String   // top_garage, reactive, certified_premium, most_reviews, trusted
+  badgeName       String   // Nom d'affichage du badge
+  description     String?  // Description du badge
+  iconUrl         String?  // URL de l'icône du badge
+  earnedAt        DateTime @default(now())
+  
+  // Relations
+  garage          Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@index([garageId])
+  @@index([badgeType])
+}
+
+// ============================================================================
+// GARAGE CLIENTS - CRM pour les garages
+// ============================================================================
+model GarageClient {
+  id              String   @id @default(cuid())
+  garageId        String
+  name            String
+  phone           String
+  email           String?
+  vehicleCount    Int      @default(0)
+  lastVisitDate   DateTime?
+  totalSpent      Float    @default(0)
+  notes           String?  // Notes du garage sur ce client
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  garage          Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  reminders       ClientReminder[]
+
+  @@index([garageId])
+  @@index([phone])
+}
+
+// ============================================================================
+// CLIENT REMINDERS - Rappels automatiques
+// ============================================================================
+model ClientReminder {
+  id              String   @id @default(cuid())
+  clientId        String
+  type            String   // oil_change, ct_expiry, insurance_expiry, custom
+  message         String
+  dueDate         DateTime
+  isSent          Boolean  @default(false)
+  sentAt          DateTime?
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  client          GarageClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([dueDate])
+  @@index([isSent])
+}
+
+// ============================================================================
+// VEHICLE TRANSFER - Transfert de propriété
+// ============================================================================
+model VehicleTransfer {
+  id          String   @id @default(cuid())
+  vehicleId   String
+  code        String   @unique // Code à 6 chiffres
+  fromUserId  String
+  toUserId    String?
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+  fromUser    User     @relation("TransferFrom", fields: [fromUserId], references: [id])
+  toUser      User?    @relation("TransferTo", fields: [toUserId], references: [id])
+
+  @@index([code])
+  @@index([vehicleId])
+  @@index([expiresAt])
+}
+
+// ============================================================================
+// VEHICLE STATS - Statistiques avancées du véhicule
+// ============================================================================
+model VehicleStats {
+  id                String   @id @default(cuid())
+  vehicleId         String   @unique
+  estimatedValue    Int      @default(0)     // Valeur estimée en FCFA
+  resaleScore       Int      @default(50)    // Score de revente /100
+  totalCost12Months Int      @default(0)     // Coût total sur 12 mois en FCFA
+  totalCostAllTime  Int      @default(0)     // Coût total depuis le début
+  averageMonthlyCost Int     @default(0)     // Coût mensuel moyen
+  comparisonPercent Int      @default(0)     // Comparaison vs moyenne du marché (%)
+  valueHistory      String?                  // JSON: historique des valeurs
+  lastCalculated    DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  vehicle           Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+}
+
+// ============================================================================
+// VALUE HISTORY - Historique de la valeur du véhicule
+// ============================================================================
+model ValueHistory {
+  id          String   @id @default(cuid())
+  vehicleId   String
+  value       Int                       // Valeur en FCFA
+  reason      String?                   // Raison du changement
+  recordedAt  DateTime @default(now())
+  
+  // Relations
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@index([recordedAt])
+}
