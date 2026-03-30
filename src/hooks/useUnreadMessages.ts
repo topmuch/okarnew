@@ -53,7 +53,8 @@ interface UseUnreadMessagesReturn extends UnreadMessagesState {
 }
 
 // Son de notification (data URI pour éviter les fichiers externes)
-const NOTIFICATION_SOUND = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleVo2ZnOTk4ttb2hslZePjHyBcmh0oY1xX2Rwd4aHhYBnYF9YVFJOTUtHREA7NzQyLCsdHhsYFg8NCgkGBCQeIysvOD9CTVFWW2RpbXZ/g4mKi42KiIJ7dW1oYV5bVVFNSUA5ODUzMDEyMzU2ODo8PT5BQ0VGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj4CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqusra6vsLGys7S1tre4ubq7vL2+v8DBwsPExcbHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl') 
+// Son court et discret pour les notifications
+const NOTIFICATION_SOUND = 'data:audio/wav;base64,UklGRl9vT19teleVo2ZnOTk4ttb2hslZePjHyBcmh0oY1xX2Rwd4aHhYBnYF9YVFJOTUtHREA7NzQyLCsdHhsYFg8NCgkAA==' 
 
 export function useUnreadMessages(options: UseUnreadMessagesOptions = {}): UseUnreadMessagesReturn {
   const {

@@ -3,13 +3,15 @@
  * 
  * POST /api/public/qrcode/activate
  * 
- * Active un QR code en créant un véhicule et optionnellement un utilisateur
+ * Active un QR code en créant un véhicule et optionnellement un utilisateur.
+ * Supporte les nouveaux champs de dates pour Assurance et Contrôle Technique.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/auth/auth'
 import { randomBytes } from 'crypto'
+import { calculateInsuranceStatus, calculateTechnicalCheckStatus } from '@/lib/documentStatus'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,11 +25,19 @@ export async function POST(request: NextRequest) {
       brand,
       model,
       year,
+      color,
+      mileage,
+      vin,
+      // Nouveaux champs de dates
+      insuranceStartDate,
+      insuranceEndDate,
+      technicalCheckStartDate,
+      technicalCheckEndDate,
       createAccount = false,
       password,
     } = body
 
-    // Validation
+    // Validation des champs requis
     if (!code || !ownerEmail || !plateNumber || !brand || !model) {
       return NextResponse.json(
         { error: 'Informations manquantes. Code, email, plaque, marque et modèle sont requis.' },
@@ -89,17 +99,42 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Créer le véhicule
+    // Parser les dates et calculer les statuts
+    const insuranceStart = insuranceStartDate ? new Date(insuranceStartDate) : null
+    const insuranceEnd = insuranceEndDate ? new Date(insuranceEndDate) : null
+    const technicalCheckStart = technicalCheckStartDate ? new Date(technicalCheckStartDate) : null
+    const technicalCheckEnd = technicalCheckEndDate ? new Date(technicalCheckEndDate) : null
+
+    // Calculer les statuts automatiquement
+    const insuranceStatusResult = calculateInsuranceStatus(insuranceStart, insuranceEnd)
+    const ctStatusResult = calculateTechnicalCheckStatus(technicalCheckStart, technicalCheckEnd)
+
+    // Créer le véhicule avec les nouveaux champs
     const vehicle = await db.vehicle.create({
       data: {
         plateNumber: plateNumber.toUpperCase(),
         brand,
         model,
         year: year ? parseInt(year) : null,
+        color: color || null,
+        mileage: mileage ? parseInt(mileage) : 0,
+        vin: vin || null,
         ownerId: user.id,
         qrCodeId: qrCode.id,
         garageId: qrCode.assignedGarageId,
         healthScore: 100, // Score initial parfait
+        // Nouveaux champs assurance
+        insuranceStartDate: insuranceStart,
+        insuranceEndDate: insuranceEnd,
+        insuranceStatus: insuranceStatusResult.status,
+        // Nouveaux champs CT
+        technicalCheckStartDate: technicalCheckStart,
+        technicalCheckEndDate: technicalCheckEnd,
+        technicalCheckStatus: ctStatusResult.status,
+        // Compatibilité avec anciens champs
+        insuranceExpiryDate: insuranceEnd,
+        technicalControlDate: technicalCheckEnd,
+        technicalControlStatus: ctStatusResult.status,
       },
     })
 
@@ -115,6 +150,33 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Créer des alertes si nécessaire
+    if (insuranceStatusResult.status === 'expiring_soon' || insuranceStatusResult.status === 'expired') {
+      await db.vehicleAlert.create({
+        data: {
+          vehicleId: vehicle.id,
+          type: 'insurance_expiry',
+          message: insuranceStatusResult.status === 'expired'
+            ? `Assurance expirée depuis le ${insuranceEnd?.toLocaleDateString('fr-FR') || 'N/A'}`
+            : `Assurance expire dans ${insuranceStatusResult.daysRemaining} jours`,
+          severity: insuranceStatusResult.status === 'expired' ? 'critical' : 'warning',
+        },
+      })
+    }
+
+    if (ctStatusResult.status === 'expiring_soon' || ctStatusResult.status === 'expired') {
+      await db.vehicleAlert.create({
+        data: {
+          vehicleId: vehicle.id,
+          type: 'ct_expiry',
+          message: ctStatusResult.status === 'expired'
+            ? `Contrôle technique expiré depuis le ${technicalCheckEnd?.toLocaleDateString('fr-FR') || 'N/A'}`
+            : `Contrôle technique expire dans ${ctStatusResult.daysRemaining} jours`,
+          severity: ctStatusResult.status === 'expired' ? 'critical' : 'warning',
+        },
+      })
+    }
+
     // Log d'audit
     await db.auditLog.create({
       data: {
@@ -126,6 +188,8 @@ export async function POST(request: NextRequest) {
           code: qrCode.code,
           vehiclePlate: plateNumber,
           ownerEmail: ownerEmail,
+          hasInsuranceDates: !!(insuranceStart && insuranceEnd),
+          hasCTDates: !!(technicalCheckStart && technicalCheckEnd),
         }),
       },
     })
@@ -135,6 +199,16 @@ export async function POST(request: NextRequest) {
       vehicleId: vehicle.id,
       userId: user.id,
       message: 'Véhicule activé avec succès',
+      documents: {
+        insurance: {
+          status: insuranceStatusResult.status,
+          daysRemaining: insuranceStatusResult.daysRemaining,
+        },
+        technicalCheck: {
+          status: ctStatusResult.status,
+          daysRemaining: ctStatusResult.daysRemaining,
+        },
+      },
     })
 
   } catch (error) {

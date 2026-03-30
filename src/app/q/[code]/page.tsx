@@ -7,6 +7,8 @@
  * Elle affiche:
  * - Si QR en stock: Formulaire d'activation (nouveau véhicule)
  * - Si QR actif: Informations du véhicule (teasing) + bouton pour voir plus
+ * 
+ * Mis à jour : Support des dates d'assurance et contrôle technique
  */
 
 'use client'
@@ -25,7 +27,6 @@ import {
   User,
   Mail,
   Phone,
-  MapPin,
   Calendar,
   Gauge,
   Shield,
@@ -33,8 +34,11 @@ import {
   AlertTriangle,
   Loader2,
   Sparkles,
-  ArrowRight,
   Lock,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  Info,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -70,6 +74,7 @@ export default function QRCodePublicPage() {
 
   // Formulaire d'activation
   const [activating, setActivating] = useState(false)
+  const [showOptionalFields, setShowOptionalFields] = useState(false)
   const [formData, setFormData] = useState({
     ownerName: '',
     ownerEmail: '',
@@ -78,6 +83,13 @@ export default function QRCodePublicPage() {
     brand: '',
     model: '',
     year: '',
+    color: '',
+    mileage: '',
+    // Nouveaux champs de dates
+    insuranceStartDate: '',
+    insuranceEndDate: '',
+    technicalCheckStartDate: '',
+    technicalCheckEndDate: '',
   })
 
   // Charger les infos du QR code
@@ -116,8 +128,20 @@ export default function QRCodePublicPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code,
-          ...formData,
+          ownerName: formData.ownerName,
+          ownerEmail: formData.ownerEmail,
+          ownerPhone: formData.ownerPhone,
+          plateNumber: formData.plateNumber,
+          brand: formData.brand,
+          model: formData.model,
           year: formData.year ? parseInt(formData.year) : null,
+          color: formData.color || null,
+          mileage: formData.mileage ? parseInt(formData.mileage) : 0,
+          // Nouveaux champs de dates
+          insuranceStartDate: formData.insuranceStartDate || null,
+          insuranceEndDate: formData.insuranceEndDate || null,
+          technicalCheckStartDate: formData.technicalCheckStartDate || null,
+          technicalCheckEndDate: formData.technicalCheckEndDate || null,
         }),
       })
 
@@ -305,7 +329,7 @@ export default function QRCodePublicPage() {
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-8 max-w-xl">
+        <main className="container mx-auto px-4 py-6 max-w-xl">
           {/* Badge */}
           <div className="text-center mb-6">
             <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-base px-4 py-1">
@@ -344,7 +368,7 @@ export default function QRCodePublicPage() {
                         onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
                         placeholder="Amadou Diouf"
                         required
-                        className="mt-1"
+                        className="mt-1 h-11"
                       />
                     </div>
                     <div>
@@ -355,7 +379,7 @@ export default function QRCodePublicPage() {
                         onChange={(e) => setFormData({ ...formData, ownerEmail: e.target.value })}
                         placeholder="email@exemple.com"
                         required
-                        className="mt-1"
+                        className="mt-1 h-11"
                       />
                     </div>
                     <div>
@@ -365,7 +389,7 @@ export default function QRCodePublicPage() {
                         onChange={(e) => setFormData({ ...formData, ownerPhone: e.target.value })}
                         placeholder="77 123 45 67"
                         required
-                        className="mt-1"
+                        className="mt-1 h-11"
                       />
                     </div>
                   </div>
@@ -387,7 +411,7 @@ export default function QRCodePublicPage() {
                         onChange={(e) => setFormData({ ...formData, plateNumber: e.target.value.toUpperCase() })}
                         placeholder="AA-1234-AA"
                         required
-                        className="mt-1 font-mono"
+                        className="mt-1 h-11 font-mono"
                       />
                     </div>
                     <div>
@@ -397,7 +421,7 @@ export default function QRCodePublicPage() {
                         onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                         placeholder="Toyota"
                         required
-                        className="mt-1"
+                        className="mt-1 h-11"
                       />
                     </div>
                     <div>
@@ -407,7 +431,7 @@ export default function QRCodePublicPage() {
                         onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                         placeholder="Corolla"
                         required
-                        className="mt-1"
+                        className="mt-1 h-11"
                       />
                     </div>
                     <div>
@@ -419,10 +443,110 @@ export default function QRCodePublicPage() {
                         placeholder="2019"
                         min="1900"
                         max={new Date().getFullYear()}
-                        className="mt-1"
+                        className="mt-1 h-11"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-600">Kilométrage</Label>
+                      <Input
+                        type="number"
+                        value={formData.mileage}
+                        onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
+                        placeholder="85000"
+                        className="mt-1 h-11"
                       />
                     </div>
                   </div>
+                </div>
+
+                <Separator />
+
+                {/* Section Documents administratifs (optionnelle) */}
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowOptionalFields(!showOptionalFields)}
+                    className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-gray-500" />
+                      <span className="font-medium text-gray-700">Documents administratifs</span>
+                      <Badge variant="secondary" className="text-xs">Optionnel</Badge>
+                    </div>
+                    {showOptionalFields ? (
+                      <ChevronUp className="h-4 w-4 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    )}
+                  </button>
+
+                  {showOptionalFields && (
+                    <div className="space-y-4 pt-2 animate-in slide-in-from-top-2 duration-200">
+                      {/* Info box */}
+                      <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl text-sm text-blue-700">
+                        <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <p>
+                          Renseignez ces dates pour recevoir des alertes avant expiration de vos documents.
+                        </p>
+                      </div>
+
+                      {/* Assurance */}
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-gray-700 flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-emerald-500" />
+                          Assurance
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-xs text-gray-500">Date de début</Label>
+                            <Input
+                              type="date"
+                              value={formData.insuranceStartDate}
+                              onChange={(e) => setFormData({ ...formData, insuranceStartDate: e.target.value })}
+                              className="mt-1 h-11"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-500">Date de fin</Label>
+                            <Input
+                              type="date"
+                              value={formData.insuranceEndDate}
+                              onChange={(e) => setFormData({ ...formData, insuranceEndDate: e.target.value })}
+                              className="mt-1 h-11"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Contrôle Technique */}
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-gray-700 flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-blue-500" />
+                          Contrôle Technique
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-xs text-gray-500">Date de début</Label>
+                            <Input
+                              type="date"
+                              value={formData.technicalCheckStartDate}
+                              onChange={(e) => setFormData({ ...formData, technicalCheckStartDate: e.target.value })}
+                              className="mt-1 h-11"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-500">Date de fin</Label>
+                            <Input
+                              type="date"
+                              value={formData.technicalCheckEndDate}
+                              onChange={(e) => setFormData({ ...formData, technicalCheckEndDate: e.target.value })}
+                              className="mt-1 h-11"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Button
@@ -444,7 +568,10 @@ export default function QRCodePublicPage() {
                 </Button>
 
                 <p className="text-center text-xs text-gray-400">
-                  En activant ce QR code, vous acceptez les conditions d'utilisation OKAR
+                  En activant ce QR code, vous acceptez les{' '}
+                  <Link href="/cgu" className="underline hover:text-gray-600">
+                    conditions d'utilisation OKAR
+                  </Link>
                 </p>
               </form>
             </CardContent>

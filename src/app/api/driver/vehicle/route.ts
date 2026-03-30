@@ -1,10 +1,19 @@
 /**
  * OKAR API - Driver Vehicle Info
- * Récupère les informations du véhicule du conducteur
+ * 
+ * GET /api/driver/vehicle
+ * 
+ * Récupère les informations du véhicule du conducteur connecté.
+ * Utilise les nouveaux champs de dates pour calculer les statuts.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { 
+  calculateInsuranceStatus, 
+  calculateTechnicalCheckStatus,
+  checkVehicleDocuments 
+} from '@/lib/documentStatus'
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,24 +46,29 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Calculer les jours restants pour les échéances
+    // Calculer les statuts avec les nouveaux champs
+    const insuranceStatus = calculateInsuranceStatus(
+      vehicle.insuranceStartDate || vehicle.insuranceExpiryDate, // Fallback pour compatibilité
+      vehicle.insuranceEndDate || vehicle.insuranceExpiryDate
+    )
+
+    const technicalCheckStatus = calculateTechnicalCheckStatus(
+      vehicle.technicalCheckStartDate || vehicle.technicalControlDate,
+      vehicle.technicalCheckEndDate || vehicle.technicalControlDate
+    )
+
+    // Vérifier les documents et générer les alertes
+    const documentCheck = checkVehicleDocuments({
+      insuranceStartDate: vehicle.insuranceStartDate,
+      insuranceEndDate: vehicle.insuranceEndDate,
+      technicalCheckStartDate: vehicle.technicalCheckStartDate,
+      technicalCheckEndDate: vehicle.technicalCheckEndDate,
+    })
+
+    // Calculer les jours restants pour le prochain vidange
     const now = new Date()
-    const insuranceExpiry = vehicle.insuranceExpiryDate 
-      ? new Date(vehicle.insuranceExpiryDate) 
-      : null
-    const technicalControl = vehicle.technicalControlDate 
-      ? new Date(vehicle.technicalControlDate) 
-      : null
     const nextOilChange = vehicle.nextOilChangeDate 
       ? new Date(vehicle.nextOilChangeDate) 
-      : null
-
-    const daysUntilInsurance = insuranceExpiry 
-      ? Math.ceil((insuranceExpiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      : null
-
-    const daysUntilCT = technicalControl 
-      ? Math.ceil((technicalControl.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) 
       : null
 
     const daysUntilOilChange = nextOilChange 
@@ -72,24 +86,32 @@ export async function GET(request: NextRequest) {
         mileage: vehicle.mileage,
         healthScore: vehicle.healthScore,
         qrCode: vehicle.qrCode?.code || null,
+        
+        // Assurance avec statut calculé
         insurance: {
-          expiryDate: insuranceExpiry,
-          daysRemaining: daysUntilInsurance,
-          status: daysUntilInsurance !== null 
-            ? daysUntilInsurance < 0 ? 'expired' 
-            : daysUntilInsurance <= 15 ? 'expiring_soon' 
-            : 'valid'
-            : 'unknown'
+          startDate: vehicle.insuranceStartDate || vehicle.insuranceExpiryDate,
+          endDate: vehicle.insuranceEndDate || vehicle.insuranceExpiryDate,
+          daysRemaining: insuranceStatus.daysRemaining,
+          status: insuranceStatus.status,
+          label: insuranceStatus.label,
+          isValid: insuranceStatus.isValid,
+          color: insuranceStatus.color,
+          bgColor: insuranceStatus.bgColor,
         },
+        
+        // Contrôle Technique avec statut calculé
         technicalControl: {
-          date: technicalControl,
-          daysRemaining: daysUntilCT,
-          status: daysUntilCT !== null 
-            ? daysUntilCT < 0 ? 'expired' 
-            : daysUntilCT <= 15 ? 'expiring_soon' 
-            : 'valid'
-            : 'unknown'
+          startDate: vehicle.technicalCheckStartDate || vehicle.technicalControlDate,
+          endDate: vehicle.technicalCheckEndDate || vehicle.technicalControlDate,
+          daysRemaining: technicalCheckStatus.daysRemaining,
+          status: technicalCheckStatus.status,
+          label: technicalCheckStatus.label,
+          isValid: technicalCheckStatus.isValid,
+          color: technicalCheckStatus.color,
+          bgColor: technicalCheckStatus.bgColor,
         },
+        
+        // Vidange
         oilChange: {
           nextDate: nextOilChange,
           nextMileage: vehicle.nextOilChangeMileage,
@@ -100,6 +122,13 @@ export async function GET(request: NextRequest) {
             : 'ok'
             : 'unknown'
         },
+        
+        // Alerte documents
+        documentAlerts: documentCheck.alerts,
+        hasDocumentWarnings: documentCheck.hasWarnings,
+        hasDocumentErrors: documentCheck.hasErrors,
+        
+        // Alertes générales
         alerts: vehicle.alerts.map(alert => ({
           id: alert.id,
           type: alert.type,

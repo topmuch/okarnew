@@ -97,10 +97,22 @@ model Vehicle {
   qrCodeId        String?  @unique
   ownerId         String
   garageId        String?
-  technicalControlDate DateTime?
-  technicalControlStatus String @default("valid") // valid, expiring soon, expired
-  insuranceExpiryDate   DateTime?
-  insuranceStatus       String @default("valid")
+  
+  // === ASSURANCE ===
+  insuranceStartDate   DateTime?   // Date de début d'assurance
+  insuranceEndDate     DateTime?   // Date de fin d'assurance
+  insuranceStatus      String      @default("valid") // valid, expiring_soon, expired, unknown
+  
+  // === CONTRÔLE TECHNIQUE ===
+  technicalCheckStartDate DateTime?   // Date de début CT
+  technicalCheckEndDate   DateTime?   // Date de fin CT
+  technicalCheckStatus    String      @default("valid") // valid, expiring_soon, expired, unknown
+  
+  // Anciens champs conservés pour compatibilité (deprecated - à supprimer après migration)
+  technicalControlDate DateTime?      // @deprecated: utiliser technicalCheckEndDate
+  technicalControlStatus String @default("valid") // @deprecated: utiliser technicalCheckStatus
+  insuranceExpiryDate   DateTime?     // @deprecated: utiliser insuranceEndDate
+  
   healthScore     Int      @default(100) // 0-100
   transferCode    String?  // Code à 6 chiffres pour transfert
   transferExpiry  DateTime?

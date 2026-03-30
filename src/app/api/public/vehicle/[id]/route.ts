@@ -5,10 +5,16 @@
  * 
  * Retourne les informations publiques du passeport numérique d'un véhicule.
  * Accessible sans authentification pour les scans QR code.
+ * 
+ * Mis à jour : Utilise les nouveaux champs de dates pour Assurance et CT
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { 
+  calculateInsuranceStatus, 
+  calculateTechnicalCheckStatus 
+} from '@/lib/documentStatus'
 
 export async function GET(
   request: NextRequest,
@@ -87,10 +93,16 @@ export async function GET(
       )
     }
 
-    // Calculer les statuts d'assurance et contrôle technique
-    const now = new Date()
-    const insuranceStatus = calculateDocumentStatus(vehicle.insuranceExpiryDate)
-    const technicalControlStatus = calculateDocumentStatus(vehicle.technicalControlDate)
+    // Calculer les statuts avec les nouveaux champs (avec fallback pour compatibilité)
+    const insuranceStatusResult = calculateInsuranceStatus(
+      vehicle.insuranceStartDate || null,
+      vehicle.insuranceEndDate || vehicle.insuranceExpiryDate || null
+    )
+
+    const technicalCheckStatusResult = calculateTechnicalCheckStatus(
+      vehicle.technicalCheckStartDate || null,
+      vehicle.technicalCheckEndDate || vehicle.technicalControlDate || null
+    )
 
     // Compter les accidents dans l'historique
     const accidentCount = vehicle.maintenanceHistory.filter(
@@ -112,8 +124,9 @@ export async function GET(
         mileage: vehicle.mileage,
         vin: vehicle.vin ? maskVin(vehicle.vin) : null,
         // Ces champs peuvent être ajoutés au schéma plus tard
-        fuel: null as string | null, // essence, diesel, gpl, electrique
-        transmission: null as string | null, // manuelle, automatique
+        fuel: null as string | null,
+        transmission: null as string | null,
+        owners: 1, // Valeur par défaut
       },
 
       // Score de confiance OKAR
@@ -123,19 +136,27 @@ export async function GET(
         color: getScoreColor(vehicle.healthScore),
       },
 
-      // Alertes critiques
+      // Alertes critiques avec données enrichies
       documents: {
         insurance: {
-          status: insuranceStatus.status,
-          expiryDate: vehicle.insuranceExpiryDate?.toISOString() || null,
-          daysRemaining: insuranceStatus.daysRemaining,
-          isValid: insuranceStatus.isValid,
+          status: insuranceStatusResult.status,
+          startDate: vehicle.insuranceStartDate?.toISOString() || null,
+          endDate: vehicle.insuranceEndDate?.toISOString() || vehicle.insuranceExpiryDate?.toISOString() || null,
+          daysRemaining: insuranceStatusResult.daysRemaining,
+          isValid: insuranceStatusResult.isValid,
+          label: insuranceStatusResult.label,
+          color: insuranceStatusResult.color,
+          bgColor: insuranceStatusResult.bgColor,
         },
         technicalControl: {
-          status: technicalControlStatus.status,
-          expiryDate: vehicle.technicalControlDate?.toISOString() || null,
-          daysRemaining: technicalControlStatus.daysRemaining,
-          isValid: technicalControlStatus.isValid,
+          status: technicalCheckStatusResult.status,
+          startDate: vehicle.technicalCheckStartDate?.toISOString() || null,
+          endDate: vehicle.technicalCheckEndDate?.toISOString() || vehicle.technicalControlDate?.toISOString() || null,
+          daysRemaining: technicalCheckStatusResult.daysRemaining,
+          isValid: technicalCheckStatusResult.isValid,
+          label: technicalCheckStatusResult.label,
+          color: technicalCheckStatusResult.color,
+          bgColor: technicalCheckStatusResult.bgColor,
         },
       },
 
@@ -198,29 +219,6 @@ export async function GET(
 }
 
 // Fonctions utilitaires
-
-function calculateDocumentStatus(expiryDate: Date | null): {
-  status: 'valid' | 'expiring_soon' | 'expired' | 'unknown'
-  daysRemaining: number | null
-  isValid: boolean
-} {
-  if (!expiryDate) {
-    return { status: 'unknown', daysRemaining: null, isValid: false }
-  }
-
-  const now = new Date()
-  const expiry = new Date(expiryDate)
-  const diffTime = expiry.getTime() - now.getTime()
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-  if (diffDays < 0) {
-    return { status: 'expired', daysRemaining: diffDays, isValid: false }
-  }
-  if (diffDays <= 30) {
-    return { status: 'expiring_soon', daysRemaining: diffDays, isValid: true }
-  }
-  return { status: 'valid', daysRemaining: diffDays, isValid: true }
-}
 
 function getScoreLabel(score: number): string {
   if (score >= 85) return 'Excellent'
