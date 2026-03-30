@@ -18,8 +18,9 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader2, Car, Eye, EyeOff, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { Loader2, Car, Eye, EyeOff, ArrowRight, CheckCircle2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { BackToHomeButton } from '@/components/okar/BackToHomeButton'
 
 export default function RegisterPage() {
   const [accountType, setAccountType] = useState<'driver' | 'garage'>('driver')
@@ -122,6 +123,11 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-pink-50 to-blue-50 p-4">
       <div className="w-full max-w-lg space-y-8">
+        {/* Back to home */}
+        <div className="text-left">
+          <BackToHomeButton />
+        </div>
+        
         {/* Logo */}
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-3">

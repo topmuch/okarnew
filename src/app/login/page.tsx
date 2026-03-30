@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Car, Eye, EyeOff, ArrowRight, AlertTriangle, WifiOff, Clock } from 'lucide-react'
 import Link from 'next/link'
+import { BackToHomeButton } from '@/components/okar/BackToHomeButton'
 
 // Routes de redirection par rôle
 const REDIRECT_ROUTES: Record<string, string> = {
@@ -92,6 +93,11 @@ function LoginContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0F172A] p-4">
       <div className="w-full max-w-md space-y-8">
+        {/* Back to home */}
+        <div className="text-left">
+          <BackToHomeButton className="text-gray-400 hover:text-white border-gray-700 hover:border-gray-600 bg-gray-800/50" />
+        </div>
+        
         {/* Logo */}
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-3">

@@ -128,6 +128,9 @@ export default function LandingPage() {
             <a href="#testimonials" className="text-[#4B5563] hover:text-amber-600 transition-colors duration-150 text-sm font-medium">
               Témoignages
             </a>
+            <Link href="/demo" className="text-[#4B5563] hover:text-amber-600 transition-colors duration-150 text-sm font-medium">
+              Démo
+            </Link>
           </nav>
 
           {/* Actions */}
@@ -166,6 +169,9 @@ export default function LandingPage() {
             <a href="#testimonials" className="block text-[#4B5563] hover:text-amber-600 py-2 font-medium" onClick={() => setMobileMenuOpen(false)}>
               Témoignages
             </a>
+            <Link href="/demo" className="block text-[#4B5563] hover:text-amber-600 py-2 font-medium" onClick={() => setMobileMenuOpen(false)}>
+              Démo
+            </Link>
             <Link href="/login" className="block text-[#4B5563] hover:text-amber-600 py-2 font-medium" onClick={() => setMobileMenuOpen(false)}>
               Connexion
             </Link>
@@ -646,23 +652,23 @@ export default function LandingPage() {
               </p>
             </div>
 
+            {/* Produit */}
+            <div>
+              <h4 className="font-semibold text-[#1F2937] mb-4 text-sm uppercase tracking-wide">Produit</h4>
+              <ul className="space-y-2">
+                <li><Link href="/demo" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Démo Interactive</Link></li>
+                <li><Link href="#features" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Nos Services</Link></li>
+                <li><Link href="/register?role=garage" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Devenir garage</Link></li>
+              </ul>
+            </div>
+
             {/* Légal */}
             <div>
               <h4 className="font-semibold text-[#1F2937] mb-4 text-sm uppercase tracking-wide">Légal</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Mentions légales</a></li>
-                <li><a href="#" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Politique de confidentialité</a></li>
-                <li><a href="#" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">CGU</a></li>
-              </ul>
-            </div>
-
-            {/* Services */}
-            <div>
-              <h4 className="font-semibold text-[#1F2937] mb-4 text-sm uppercase tracking-wide">Services</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Rapport véhicule</a></li>
-                <li><a href="#" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Carnet numérique</a></li>
-                <li><a href="#" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Devenir garage</a></li>
+                <li><Link href="/cgu" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">CGU</Link></li>
+                <li><Link href="/confidentialite" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">Confidentialité</Link></li>
+                <li><Link href="/about" className="text-sm text-[#6B7280] hover:text-amber-600 transition-colors duration-150">À propos</Link></li>
               </ul>
             </div>
 
