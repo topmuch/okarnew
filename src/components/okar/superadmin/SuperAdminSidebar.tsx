@@ -3,12 +3,16 @@
  * 
  * Design "Luminous Dark & Glassmorphism Premium"
  * Sidebar avec effet de verre distinct et liens actifs lumineux
+ * 
+ * CORRIGÉ: Badge notifications pour nouveaux messages
  */
 
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
 import {
   Car,
   Wrench,
@@ -24,6 +28,8 @@ import {
   Sparkles,
   Users,
   UserPlus,
+  MessageSquare,
+  Bell,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -31,9 +37,11 @@ interface SidebarNavItem {
   icon: React.ElementType
   label: string
   tab: string
+  badge?: number
+  showNotification?: boolean
 }
 
-const navItems: SidebarNavItem[] = [
+const baseNavItems: SidebarNavItem[] = [
   {
     icon: BarChart3,
     label: 'Vue d\'ensemble',
@@ -80,6 +88,12 @@ const navItems: SidebarNavItem[] = [
     tab: 'audit',
   },
   {
+    icon: MessageSquare,
+    label: 'Messages',
+    tab: 'messages',
+    showNotification: true,
+  },
+  {
     icon: Settings,
     label: 'Paramètres',
     tab: 'settings',
@@ -90,6 +104,7 @@ interface SuperAdminSidebarProps {
   activeTab: string
   onTabChange: (tab: string) => void
   pendingCount?: number
+  unreadMessagesCount?: number
   onLogout: () => void
   userName?: string
   userEmail?: string
@@ -98,11 +113,22 @@ interface SuperAdminSidebarProps {
 export function SuperAdminSidebar({ 
   activeTab, 
   onTabChange, 
-  pendingCount = 0, 
+  pendingCount = 0,
+  unreadMessagesCount = 0, 
   onLogout,
   userName = 'Admin',
   userEmail = 'admin@okar.com'
 }: SuperAdminSidebarProps) {
+  // Construire les nav items avec les badges
+  const navItems = baseNavItems.map(item => {
+    if (item.tab === 'requests' && pendingCount > 0) {
+      return { ...item, badge: pendingCount }
+    }
+    if (item.tab === 'messages' && unreadMessagesCount > 0) {
+      return { ...item, badge: unreadMessagesCount }
+    }
+    return item
+  })
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 flex flex-col overflow-hidden">
       {/* Background with Luminous Dark */}
@@ -177,10 +203,18 @@ export function SuperAdminSidebar({
                   isActive ? "text-[#ff6201] drop-shadow-[0_0_8px_rgba(255,98,1,0.5)]" : "text-[#64748B] group-hover:text-[#94A3B8]",
                 )} />
                 <span className="flex-1 text-left">{item.label}</span>
-                {item.tab === 'requests' && pendingCount > 0 && (
-                  <span className="bg-gradient-to-r from-[#ff6201] to-[#ff8533] text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-[0_0_10px_rgba(255,98,1,0.4)] animate-pulse">
-                    {pendingCount}
+                {item.badge && item.badge > 0 && (
+                  <span className={cn(
+                    "text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-lg animate-pulse",
+                    item.tab === 'requests' 
+                      ? "bg-gradient-to-r from-[#ff6201] to-[#ff8533] shadow-[0_0_10px_rgba(255,98,1,0.4)]"
+                      : "bg-gradient-to-r from-[#EC4899] to-[#DB2777] shadow-[0_0_10px_rgba(236,72,153,0.4)]"
+                  )}>
+                    {item.badge}
                   </span>
+                )}
+                {item.showNotification && item.badge && item.badge > 0 && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#EC4899] rounded-full animate-ping" />
                 )}
                 {isActive && (
                   <ChevronRight className="h-4 w-4 text-[#ff6201]/60" />

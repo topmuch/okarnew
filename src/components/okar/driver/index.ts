@@ -27,3 +27,6 @@ export { ValueChart } from './ValueChart'
 
 // Composants pour nouveaux utilisateurs
 export { WelcomeCard } from './WelcomeCard'
+
+// Composant Support
+export { SupportCenter } from './SupportCenter'

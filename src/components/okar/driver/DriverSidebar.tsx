@@ -32,7 +32,8 @@ import {
   User,
   Home,
   ChevronRight,
-  BarChart3
+  BarChart3,
+  MessageCircle
 } from 'lucide-react'
 
 interface DriverSidebarProps {
@@ -71,6 +72,7 @@ export function DriverSidebar({
     { id: 'emergency', label: 'Urgence', icon: Zap },
     { id: 'transfer', label: 'Transfert', icon: Share2 },
     { id: 'report', label: 'Rapport', icon: FileText },
+    { id: 'support', label: 'Assistance', icon: MessageCircle },
   ]
 
   const handleLogout = async () => {

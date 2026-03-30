@@ -66,7 +66,8 @@ import {
   VehicleValueCard,
   ResaleScoreCard,
   TCOCard,
-  WelcomeCard
+  WelcomeCard,
+  SupportCenter
 } from '@/components/okar/driver'
 
 // Types
@@ -853,6 +854,13 @@ export default function DriverDashboard() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {/* Tab: Support / Assistance */}
+          {activeTab === 'support' && (
+            <div className="animate-fade-in">
+              <SupportCenter user={user} />
             </div>
           )}
         </div>
