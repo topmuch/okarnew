@@ -1,12 +1,11 @@
 /**
- * OKAR - Page Publique Passeport Numérique Véhicule
+ * OKAR - Page Passeport Numérique Véhicule "WAHOU DIGITAL PASS"
  * 
  * URL: /v/[vehicleId]
  * 
- * Cette page s'affiche quand on scanne un QR Code OKAR collé sur une voiture.
- * Accessible SANS CONNEXION, ultra-rapide, inspire une confiance absolue.
- * 
- * Design: Mobile First, professionnel, rassurant, transparent.
+ * Design: Premium, Luxueux, Mobile First
+ * Style: Apple CarPlay / Application de Luxe
+ * Effet: "WAHOU" immédiat - Confiance absolue en 5 secondes
  */
 
 'use client'
@@ -29,16 +28,21 @@ import {
   MapPin,
   QrCode,
   Phone,
-  MessageCircle,
   Download,
   ChevronRight,
-  Loader2,
   BadgeCheck,
   AlertCircle,
   Building2,
+  Sparkles,
+  Users,
+  Award,
+  ExternalLink,
 } from 'lucide-react'
 
-// Types pour les données du passeport
+// ============================================================================
+// TYPES
+// ============================================================================
+
 interface VehiclePassportData {
   id: string
   plateNumber: string
@@ -51,6 +55,7 @@ interface VehiclePassportData {
     vin: string | null
     fuel: string | null
     transmission: string | null
+    owners: number
   }
   trustScore: {
     score: number
@@ -102,19 +107,23 @@ interface VehiclePassportData {
   pageUrl: string
 }
 
-// Données mock pour la démo
+// ============================================================================
+// MOCK DATA RÉALISTE
+// ============================================================================
+
 const mockVehicleData: VehiclePassportData = {
   id: 'demo-vehicle-001',
-  plateNumber: 'AA-1234-BB',
+  plateNumber: 'DK-123-AB',
   vehicle: {
     brand: 'Toyota',
     model: 'Corolla',
     year: 2019,
-    color: 'Blanc',
+    color: 'Blanc Nacré',
     mileage: 85000,
     vin: 'JTD****1234',
     fuel: 'Diesel',
     transmission: 'Automatique',
+    owners: 1,
   },
   trustScore: {
     score: 92,
@@ -186,15 +195,22 @@ const mockVehicleData: VehiclePassportData = {
   pageUrl: 'https://okar.sn/v/demo-vehicle-001',
 }
 
-// Mapping des types d'intervention vers les icônes et couleurs
-const interventionTypes: Record<string, { icon: typeof Car; color: string; label: string }> = {
-  oil_change: { icon: Fuel, color: 'text-amber-500', label: 'Vidange' },
-  major_repair: { icon: Settings, color: 'text-red-500', label: 'Réparation' },
-  accident: { icon: AlertTriangle, color: 'text-orange-500', label: 'Accident' },
-  inspection: { icon: FileText, color: 'text-blue-500', label: 'Contrôle' },
-  tire_change: { icon: Car, color: 'text-purple-500', label: 'Pneus' },
-  battery: { icon: Settings, color: 'text-green-500', label: 'Batterie' },
+// ============================================================================
+// INTERVENTION TYPES MAPPING
+// ============================================================================
+
+const interventionTypes: Record<string, { icon: typeof Car; gradient: string; bg: string }> = {
+  oil_change: { icon: Fuel, gradient: 'from-amber-400 to-orange-500', bg: 'bg-amber-50' },
+  major_repair: { icon: Settings, gradient: 'from-red-400 to-rose-500', bg: 'bg-red-50' },
+  accident: { icon: AlertTriangle, gradient: 'from-orange-400 to-red-500', bg: 'bg-orange-50' },
+  inspection: { icon: FileText, gradient: 'from-blue-400 to-indigo-500', bg: 'bg-blue-50' },
+  tire_change: { icon: Car, gradient: 'from-purple-400 to-violet-500', bg: 'bg-purple-50' },
+  battery: { icon: Settings, gradient: 'from-green-400 to-emerald-500', bg: 'bg-green-50' },
 }
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 
 export default function VehiclePassportPage() {
   const params = useParams()
@@ -203,23 +219,21 @@ export default function VehiclePassportPage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<VehiclePassportData | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [showFullHistory, setShowFullHistory] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
+  const [animateSections, setAnimateSections] = useState(false)
 
   useEffect(() => {
     if (!vehicleId) return
 
     const fetchVehicleData = async () => {
       try {
-        // En mode démo, utiliser les données mock
         if (vehicleId === 'demo' || vehicleId.startsWith('demo-')) {
-          // Simuler un délai réseau
-          await new Promise(resolve => setTimeout(resolve, 500))
+          await new Promise(resolve => setTimeout(resolve, 800))
           setData(mockVehicleData)
           setLoading(false)
           return
         }
 
-        // Sinon, appeler l'API
         const response = await fetch(`/api/public/vehicle/${vehicleId}`)
         const result = await response.json()
 
@@ -230,7 +244,6 @@ export default function VehiclePassportPage() {
         }
       } catch (err) {
         console.error('Erreur:', err)
-        // En cas d'erreur, utiliser les données mock pour la démo
         setData(mockVehicleData)
       } finally {
         setLoading(false)
@@ -240,426 +253,684 @@ export default function VehiclePassportPage() {
     fetchVehicleData()
   }, [vehicleId])
 
-  // Écran de chargement
+  // Déclencher les animations après chargement
+  useEffect(() => {
+    if (!loading && data) {
+      const timer = setTimeout(() => setAnimateSections(true), 100)
+      return () => clearTimeout(timer)
+    }
+  }, [loading, data])
+
+  // ============================================================================
+  // LOADING SCREEN
+  // ============================================================================
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="text-center">
-          <div className="relative inline-block">
-            <div className="w-16 h-16 border-4 border-emerald-100 rounded-full" />
-            <div className="absolute inset-0 w-16 h-16 border-4 border-emerald-500 rounded-full border-t-transparent animate-spin" />
-            <Shield className="absolute inset-0 m-auto h-6 w-6 text-emerald-500" />
+          <div className="relative w-20 h-20 mx-auto">
+            {/* Anneau extérieur */}
+            <div className="absolute inset-0 rounded-full border-4 border-gray-100" />
+            {/* Anneau animé */}
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-500 animate-spin" />
+            {/* Icône centrale */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Shield className="w-8 h-8 text-emerald-500" />
+            </div>
+            {/* Glow effect */}
+            <div className="absolute inset-0 rounded-full bg-emerald-400/20 animate-pulse" />
           </div>
-          <p className="mt-4 text-gray-500 font-medium">Vérification du passeport...</p>
+          <p className="mt-6 text-gray-400 font-medium text-sm tracking-wide">
+            Vérification du passeport...
+          </p>
         </div>
       </div>
     )
   }
 
-  // Écran d'erreur
+  // ============================================================================
+  // ERROR SCREEN
+  // ============================================================================
+
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <XCircle className="h-8 w-8 text-red-500" />
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
+        <div className="max-w-sm w-full">
+          <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-8 text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-red-50 rounded-full flex items-center justify-center mx-auto mb-5">
+              <XCircle className="w-10 h-10 text-red-500" />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">
+              Passeport introuvable
+            </h1>
+            <p className="text-gray-400 mb-6 text-sm leading-relaxed">
+              {error || 'Ce véhicule n\'existe pas dans notre base de données.'}
+            </p>
+            <Link href="/">
+              <button className="w-full py-3.5 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-semibold rounded-2xl active:scale-[0.98] transition-transform">
+                Retour à l'accueil
+              </button>
+            </Link>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Passeport introuvable</h1>
-          <p className="text-gray-500 mb-6">{error || 'Ce véhicule n\'existe pas dans notre base.'}</p>
-          <Link href="/">
-            <button className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-xl">
-              Retour à l'accueil
-            </button>
-          </Link>
         </div>
       </div>
     )
   }
 
-  const { vehicle, trustScore, documents, accidents, recentHistory, garage, qrCode, stats } = data
+  const { vehicle, trustScore, documents, accidents, recentHistory, garage, qrCode } = data
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
-      {/* ========== HEADER VISUEL ========== */}
+    <div className="min-h-screen bg-[#F8FAFC] pb-32">
+      {/* ========== CSS ANIMATIONS ========== */}
+      <style jsx global>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes glow-pulse {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4),
+                        0 0 40px rgba(16, 185, 129, 0.2),
+                        0 0 60px rgba(16, 185, 129, 0.1);
+          }
+          50% {
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.6),
+                        0 0 60px rgba(16, 185, 129, 0.3),
+                        0 0 90px rgba(16, 185, 129, 0.15);
+          }
+        }
+        
+        @keyframes glow-amber {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4),
+                        0 0 40px rgba(245, 158, 11, 0.2);
+          }
+          50% {
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.6),
+                        0 0 60px rgba(245, 158, 11, 0.3);
+          }
+        }
+        
+        @keyframes glow-red {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4),
+                        0 0 40px rgba(239, 68, 68, 0.2);
+          }
+          50% {
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.6),
+                        0 0 60px rgba(239, 68, 68, 0.3);
+          }
+        }
+        
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-5px);
+          }
+        }
+        
+        @keyframes shimmer {
+          0% {
+            background-position: -200% 0;
+          }
+          100% {
+            background-position: 200% 0;
+          }
+        }
+        
+        @keyframes status-pulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.02);
+          }
+        }
+        
+        .animate-fade-in-up {
+          animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        .animate-glow-emerald {
+          animation: glow-pulse 2s ease-in-out infinite;
+        }
+        
+        .animate-glow-amber {
+          animation: glow-amber 2s ease-in-out infinite;
+        }
+        
+        .animate-glow-red {
+          animation: glow-red 2s ease-in-out infinite;
+        }
+        
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+        
+        .animate-status-pulse {
+          animation: status-pulse 2s ease-in-out infinite;
+        }
+        
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+        .delay-400 { animation-delay: 400ms; }
+        .delay-500 { animation-delay: 500ms; }
+        .delay-600 { animation-delay: 600ms; }
+        
+        .font-display {
+          font-family: 'Playfair Display', Georgia, serif;
+        }
+        
+        .font-mono {
+          font-family: 'JetBrains Mono', 'SF Mono', monospace;
+        }
+      `}</style>
+
+      {/* ========== SECTION 1: HERO IMMERSIF ========== */}
       <header className="relative">
-        {/* Logo OKAR */}
-        <div className="absolute top-4 left-4 z-20">
-          <Link href="/" className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl shadow-sm">
-            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-rose-500 rounded-lg flex items-center justify-center">
+        {/* Photo du véhicule - 40% de l'écran */}
+        <div className="h-[40vh] min-h-[280px] max-h-[360px] relative overflow-hidden">
+          {/* Image placeholder avec gradient élégant */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Car className="w-32 h-32 text-white/20" />
+            </div>
+            {/* Overlay gradient vers le bas */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            {/* Effet shimmer */}
+            <div 
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+              style={{ 
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 3s ease-in-out infinite'
+              }}
+            />
+          </div>
+          
+          {/* Logo OKAR flottant */}
+          <Link 
+            href="/"
+            className="absolute top-4 left-4 z-30 flex items-center gap-2 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg shadow-black/5 active:scale-95 transition-transform"
+          >
+            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 via-rose-500 to-pink-500 rounded-xl flex items-center justify-center shadow-md">
               <span className="text-white font-bold text-sm">O</span>
             </div>
             <span className="font-bold text-lg bg-gradient-to-r from-orange-600 to-rose-600 bg-clip-text text-transparent">
               OKAR
             </span>
           </Link>
-        </div>
-
-        {/* Image de couverture simulée */}
-        <div className="h-48 md:h-64 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 relative overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Car className="w-24 h-24 text-slate-400/50" />
-          </div>
-          {/* Overlay gradient */}
-          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-slate-900/60 to-transparent" />
-        </div>
-
-        {/* Carte Plaque + Badge (sur l'image) */}
-        <div className="absolute bottom-0 left-4 right-4 transform translate-y-1/2 z-10">
-          <div className="bg-white rounded-2xl shadow-xl p-4">
-            {/* Plaque d'immatriculation */}
-            <div className="bg-white border-3 border-black rounded-lg px-4 py-3 mb-3">
-              <p className="text-center font-mono text-2xl md:text-3xl font-bold tracking-wider text-black">
-                {data.plateNumber}
-              </p>
+          
+          {/* Badge "Certifié" en haut à droite */}
+          <div className="absolute top-4 right-4 z-30 animate-float">
+            <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span className="text-xs font-semibold text-gray-700">Certifié</span>
             </div>
+          </div>
+        </div>
 
-            {/* Badge de confiance */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  trustScore.color === 'emerald' ? 'bg-emerald-100' :
-                  trustScore.color === 'green' ? 'bg-green-100' :
-                  trustScore.color === 'amber' ? 'bg-amber-100' :
-                  trustScore.color === 'orange' ? 'bg-orange-100' : 'bg-red-100'
-                }`}>
-                  <span className={`text-lg font-bold ${
-                    trustScore.color === 'emerald' ? 'text-emerald-600' :
-                    trustScore.color === 'green' ? 'text-green-600' :
-                    trustScore.color === 'amber' ? 'text-amber-600' :
-                    trustScore.color === 'orange' ? 'text-orange-600' : 'text-red-600'
-                  }`}>
-                    {trustScore.score}
-                  </span>
+        {/* CARTE PLaque + BADGE FLOTTANTE */}
+        <div className="relative z-20 px-4 -mt-20">
+          <div className={`
+            bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-5
+            ${animateSections ? 'animate-fade-in-up' : 'opacity-0'}
+          `}>
+            {/* Plaque d'immatriculation style officiel */}
+            <div className="relative mb-4">
+              <div className="bg-white border-[3px] border-black rounded-xl px-6 py-4 shadow-lg">
+                <p className="text-center font-mono text-3xl font-bold tracking-wider text-black">
+                  {data.plateNumber}
+                </p>
+              </div>
+              {/* Effet de brillance sur la plaque */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent rounded-xl pointer-events-none" />
+            </div>
+            
+            {/* Marque / Modèle / Année */}
+            <div className="text-center mb-4">
+              <h1 className="font-display text-2xl font-bold text-gray-900">
+                {vehicle.brand} {vehicle.model}
+              </h1>
+              <p className="text-gray-400 font-medium">{vehicle.year || '—'}</p>
+            </div>
+            
+            {/* BADGE DE CONFIANCE AVEC GLOW */}
+            <div className="flex justify-center">
+              <div className={`
+                relative flex items-center gap-3 px-5 py-3 rounded-2xl
+                ${trustScore.score >= 80 ? 'bg-emerald-50 animate-glow-emerald' :
+                  trustScore.score >= 50 ? 'bg-amber-50 animate-glow-amber' :
+                  'bg-red-50 animate-glow-red'}
+              `}>
+                {/* Score */}
+                <div className={`
+                  w-14 h-14 rounded-xl flex items-center justify-center
+                  ${trustScore.score >= 80 ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' :
+                    trustScore.score >= 50 ? 'bg-gradient-to-br from-amber-400 to-amber-600' :
+                    'bg-gradient-to-br from-red-400 to-red-600'}
+                  shadow-lg
+                `}>
+                  <span className="text-white text-xl font-bold">{trustScore.score}</span>
                 </div>
                 <div>
-                  <p className={`text-sm font-bold ${
-                    trustScore.color === 'emerald' ? 'text-emerald-600' :
-                    trustScore.color === 'green' ? 'text-green-600' :
-                    trustScore.color === 'amber' ? 'text-amber-600' :
-                    trustScore.color === 'orange' ? 'text-orange-600' : 'text-red-600'
-                  }`}>
-                    Score {trustScore.score}/100
+                  <p className={`
+                    text-lg font-bold
+                    ${trustScore.score >= 80 ? 'text-emerald-700' :
+                      trustScore.score >= 50 ? 'text-amber-700' : 'text-red-700'}
+                  `}>
+                    {trustScore.label}
                   </p>
-                  <p className="text-xs text-gray-500">{trustScore.label}</p>
+                  <div className="flex items-center gap-1.5">
+                    <Shield className={`w-4 h-4 ${
+                      trustScore.score >= 80 ? 'text-emerald-500' :
+                      trustScore.score >= 50 ? 'text-amber-500' : 'text-red-500'
+                    }`} />
+                    <span className="text-sm text-gray-500">Véhicule Certifié</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-full">
-                <CheckCircle className="w-4 h-4 text-emerald-500" />
-                <span className="text-sm font-semibold text-emerald-700">Certifié OKAR</span>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* ========== CONTENU PRINCIPAL ========== */}
-      <main className="pt-28 pb-8 px-4 max-w-lg mx-auto">
+      {/* ========== SECTION 2: ALERTES CRITIQUES (Feux Tricolores) ========== */}
+      <section className={`
+        px-4 mt-6
+        ${animateSections ? 'animate-fade-in-up delay-100' : 'opacity-0'}
+      `}>
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">
+          Documents Officiels
+        </h2>
         
-        {/* ========== FICHE TECHNIQUE ========== */}
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">
-            Fiche technique
-          </h2>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="grid grid-cols-2 divide-x divide-y divide-gray-100">
-              {/* Marque / Modèle */}
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Car className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs text-gray-400">Véhicule</span>
-                </div>
-                <p className="font-semibold text-gray-900">{vehicle.brand} {vehicle.model}</p>
-              </div>
-              
-              {/* Année */}
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs text-gray-400">Année</span>
-                </div>
-                <p className="font-semibold text-gray-900">{vehicle.year || '—'}</p>
-              </div>
-              
-              {/* Kilométrage */}
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Gauge className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs text-gray-400">Kilométrage</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <p className="font-semibold text-gray-900">{vehicle.mileage.toLocaleString()} km</p>
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                </div>
-              </div>
-              
-              {/* Carburant / Boîte */}
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Fuel className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs text-gray-400">Carburant</span>
-                </div>
-                <p className="font-semibold text-gray-900">{vehicle.fuel || '—'}</p>
-              </div>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Assurance */}
+          <div className={`
+            relative overflow-hidden rounded-2xl p-4
+            ${documents.insurance.isValid 
+              ? 'bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200/50' 
+              : 'bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200/50'}
+            ${documents.insurance.isValid ? 'animate-status-pulse' : ''}
+          `}>
+            {/* Icône */}
+            <div className={`
+              w-12 h-12 rounded-xl flex items-center justify-center mb-3
+              ${documents.insurance.isValid 
+                ? 'bg-gradient-to-br from-emerald-400 to-green-500 shadow-lg shadow-emerald-500/30' 
+                : 'bg-gradient-to-br from-red-400 to-rose-500 shadow-lg shadow-red-500/30'}
+            `}>
+              <Shield className="w-6 h-6 text-white" />
             </div>
             
-            {/* Couleur et Transmission */}
-            <div className="border-t border-gray-100 grid grid-cols-2 divide-x divide-gray-100">
-              <div className="p-4">
-                <span className="text-xs text-gray-400">Couleur</span>
-                <p className="font-semibold text-gray-900 mt-1">{vehicle.color || '—'}</p>
+            {/* Texte */}
+            <p className="font-bold text-gray-900 text-sm mb-1">Assurance</p>
+            <p className={`
+              text-xs font-semibold
+              ${documents.insurance.isValid ? 'text-emerald-600' : 'text-red-600'}
+            `}>
+              {documents.insurance.isValid ? 'VALIDE' : 'EXPIRÉE'}
+            </p>
+            {documents.insurance.expiryDate && (
+              <p className="text-[10px] text-gray-400 mt-1">
+                {documents.insurance.isValid ? 'jusqu\'au' : 'depuis le'} {formatDate(documents.insurance.expiryDate)}
+              </p>
+            )}
+            
+            {/* Check icon */}
+            {documents.insurance.isValid && (
+              <div className="absolute top-3 right-3">
+                <CheckCircle className="w-5 h-5 text-emerald-500" />
               </div>
-              <div className="p-4">
-                <span className="text-xs text-gray-400">Transmission</span>
-                <p className="font-semibold text-gray-900 mt-1">{vehicle.transmission || '—'}</p>
-              </div>
-            </div>
+            )}
           </div>
-        </section>
 
-        {/* ========== ALERTES CRITIQUES ========== */}
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">
-            Documents officiels
-          </h2>
-          
-          <div className="space-y-3">
-            {/* Assurance */}
-            <div className={`rounded-2xl p-4 border-2 ${
-              documents.insurance.isValid 
-                ? 'bg-emerald-50 border-emerald-200' 
-                : 'bg-red-50 border-red-200'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    documents.insurance.isValid ? 'bg-emerald-100' : 'bg-red-100'
-                  }`}>
-                    <Shield className={`w-5 h-5 ${
-                      documents.insurance.isValid ? 'text-emerald-600' : 'text-red-600'
-                    }`} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Assurance</p>
-                    <p className={`text-sm ${
-                      documents.insurance.isValid ? 'text-emerald-700' : 'text-red-700'
-                    }`}>
-                      {documents.insurance.status === 'valid' && documents.insurance.expiryDate && (
-                        <>Valide jusqu'au {formatDate(documents.insurance.expiryDate)}</>
-                      )}
-                      {documents.insurance.status === 'expiring_soon' && documents.insurance.expiryDate && (
-                        <>Expire le {formatDate(documents.insurance.expiryDate)} ({documents.insurance.daysRemaining}j)</>
-                      )}
-                      {documents.insurance.status === 'expired' && (
-                        <>EXPIRÉE</>
-                      )}
-                      {documents.insurance.status === 'unknown' && (
-                        <>Non renseignée</>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                {documents.insurance.isValid ? (
-                  <CheckCircle className="w-6 h-6 text-emerald-500" />
-                ) : (
-                  <XCircle className="w-6 h-6 text-red-500" />
-                )}
-              </div>
+          {/* Contrôle Technique */}
+          <div className={`
+            relative overflow-hidden rounded-2xl p-4
+            ${documents.technicalControl.isValid 
+              ? 'bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200/50' 
+              : 'bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200/50'}
+            ${documents.technicalControl.isValid ? 'animate-status-pulse delay-300' : ''}
+          `}>
+            {/* Icône */}
+            <div className={`
+              w-12 h-12 rounded-xl flex items-center justify-center mb-3
+              ${documents.technicalControl.isValid 
+                ? 'bg-gradient-to-br from-emerald-400 to-green-500 shadow-lg shadow-emerald-500/30' 
+                : 'bg-gradient-to-br from-red-400 to-rose-500 shadow-lg shadow-red-500/30'}
+            `}>
+              <FileText className="w-6 h-6 text-white" />
             </div>
-
-            {/* Contrôle Technique */}
-            <div className={`rounded-2xl p-4 border-2 ${
-              documents.technicalControl.isValid 
-                ? 'bg-emerald-50 border-emerald-200' 
-                : 'bg-red-50 border-red-200'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    documents.technicalControl.isValid ? 'bg-emerald-100' : 'bg-red-100'
-                  }`}>
-                    <FileText className={`w-5 h-5 ${
-                      documents.technicalControl.isValid ? 'text-emerald-600' : 'text-red-600'
-                    }`} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Contrôle Technique</p>
-                    <p className={`text-sm ${
-                      documents.technicalControl.isValid ? 'text-emerald-700' : 'text-red-700'
-                    }`}>
-                      {documents.technicalControl.status === 'valid' && documents.technicalControl.expiryDate && (
-                        <>Valide jusqu'au {formatDate(documents.technicalControl.expiryDate)}</>
-                      )}
-                      {documents.technicalControl.status === 'expiring_soon' && documents.technicalControl.expiryDate && (
-                        <>Expire le {formatDate(documents.technicalControl.expiryDate)} ({documents.technicalControl.daysRemaining}j)</>
-                      )}
-                      {documents.technicalControl.status === 'expired' && (
-                        <>EXPIRÉ</>
-                      )}
-                      {documents.technicalControl.status === 'unknown' && (
-                        <>Non renseigné</>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                {documents.technicalControl.isValid ? (
-                  <CheckCircle className="w-6 h-6 text-emerald-500" />
-                ) : (
-                  <XCircle className="w-6 h-6 text-red-500" />
-                )}
+            
+            {/* Texte */}
+            <p className="font-bold text-gray-900 text-sm mb-1">Contrôle Tech.</p>
+            <p className={`
+              text-xs font-semibold
+              ${documents.technicalControl.isValid ? 'text-emerald-600' : 'text-red-600'}
+            `}>
+              {documents.technicalControl.isValid ? 'VALIDE' : 'EXPIRÉ'}
+            </p>
+            {documents.technicalControl.expiryDate && (
+              <p className="text-[10px] text-gray-400 mt-1">
+                {documents.technicalControl.isValid ? 'jusqu\'au' : 'depuis le'} {formatDate(documents.technicalControl.expiryDate)}
+              </p>
+            )}
+            
+            {/* Check icon */}
+            {documents.technicalControl.isValid && (
+              <div className="absolute top-3 right-3">
+                <CheckCircle className="w-5 h-5 text-emerald-500" />
               </div>
-            </div>
-
-            {/* Sinistres */}
-            <div className={`rounded-2xl p-4 border-2 ${
-              !accidents.hasAccidents 
-                ? 'bg-emerald-50 border-emerald-200' 
-                : 'bg-amber-50 border-amber-200'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    !accidents.hasAccidents ? 'bg-emerald-100' : 'bg-amber-100'
-                  }`}>
-                    <AlertCircle className={`w-5 h-5 ${
-                      !accidents.hasAccidents ? 'text-emerald-600' : 'text-amber-600'
-                    }`} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Sinistres</p>
-                    <p className={`text-sm ${
-                      !accidents.hasAccidents ? 'text-emerald-700' : 'text-amber-700'
-                    }`}>
-                      {!accidents.hasAccidents 
-                        ? 'Aucun accident déclaré' 
-                        : `${accidents.count} accident${accidents.count > 1 ? 's' : ''} réparé${accidents.count > 1 ? 's' : ''} certifié${accidents.count > 1 ? 's' : ''}`
-                      }
-                    </p>
-                  </div>
-                </div>
-                {!accidents.hasAccidents ? (
-                  <CheckCircle className="w-6 h-6 text-emerald-500" />
-                ) : (
-                  <AlertTriangle className="w-6 h-6 text-amber-500" />
-                )}
-              </div>
-            </div>
+            )}
           </div>
-        </section>
+        </div>
 
-        {/* ========== HISTORIQUE RÉCENT ========== */}
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">
-            Dernières interventions certifiées
-          </h2>
+        {/* Alerte Sinistres */}
+        <div className={`
+          mt-3 rounded-2xl p-4 flex items-center gap-4
+          ${!accidents.hasAccidents 
+            ? 'bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200/50' 
+            : 'bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/50'}
+        `}>
+          <div className={`
+            w-11 h-11 rounded-xl flex items-center justify-center
+            ${!accidents.hasAccidents 
+              ? 'bg-gradient-to-br from-emerald-400 to-green-500' 
+              : 'bg-gradient-to-br from-amber-400 to-orange-500'}
+            shadow-lg
+          `}>
+            {!accidents.hasAccidents ? (
+              <CheckCircle className="w-5 h-5 text-white" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 text-white" />
+            )}
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-gray-900 text-sm">
+              {!accidents.hasAccidents ? 'Aucun accident déclaré' : `${accidents.count} accident(s) certifié(s)`}
+            </p>
+            <p className="text-xs text-gray-400">
+              {!accidents.hasAccidents ? 'Historique vierge' : 'Réparations certifiées OKAR'}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== SECTION 3: DONNÉES CLÉS (Grille Bento) ========== */}
+      <section className={`
+        px-4 mt-6
+        ${animateSections ? 'animate-fade-in-up delay-200' : 'opacity-0'}
+      `}>
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">
+          Caractéristiques
+        </h2>
+        
+        <div className="grid grid-cols-2 gap-3">
+          {/* Kilométrage */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm shadow-gray-100 border border-gray-100/50">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+                <Gauge className="w-4.5 h-4.5 text-blue-600" />
+              </div>
+              <BadgeCheck className="w-4 h-4 text-emerald-500" />
+            </div>
+            <p className="font-mono text-xl font-bold text-gray-900">
+              {vehicle.mileage.toLocaleString()}
+            </p>
+            <p className="text-xs text-gray-400">Kilomètres</p>
+          </div>
           
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            {/* Timeline */}
-            <div className="divide-y divide-gray-100">
+          {/* Carburant */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm shadow-gray-100 border border-gray-100/50">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                <Fuel className="w-4.5 h-4.5 text-amber-600" />
+              </div>
+            </div>
+            <p className="font-semibold text-lg text-gray-900">
+              {vehicle.fuel || '—'}
+            </p>
+            <p className="text-xs text-gray-400">Carburant</p>
+          </div>
+          
+          {/* Boîte de vitesse */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm shadow-gray-100 border border-gray-100/50">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-100 to-violet-100 flex items-center justify-center">
+                <Settings className="w-4.5 h-4.5 text-purple-600" />
+              </div>
+            </div>
+            <p className="font-semibold text-lg text-gray-900">
+              {vehicle.transmission || '—'}
+            </p>
+            <p className="text-xs text-gray-400">Transmission</p>
+          </div>
+          
+          {/* Propriétaires */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm shadow-gray-100 border border-gray-100/50">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center">
+                <Users className="w-4.5 h-4.5 text-rose-600" />
+              </div>
+              {vehicle.owners === 1 && (
+                <Award className="w-4 h-4 text-amber-500" />
+              )}
+            </div>
+            <p className="font-semibold text-lg text-gray-900">
+              {vehicle.owners || 1}
+            </p>
+            <p className="text-xs text-gray-400">Propriétaire{vehicle.owners > 1 ? 's' : ''}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== SECTION 4: HISTORIQUE (Timeline Verticale) ========== */}
+      <section className={`
+        px-4 mt-6
+        ${animateSections ? 'animate-fade-in-up delay-300' : 'opacity-0'}
+      `}>
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">
+          Dernières interventions certifiées
+        </h2>
+        
+        <div className="bg-white rounded-3xl shadow-sm shadow-gray-100 border border-gray-100/50 overflow-hidden">
+          {/* Timeline */}
+          <div className="relative p-4">
+            {/* Ligne verticale */}
+            <div className="absolute left-8 top-6 bottom-6 w-0.5 bg-gradient-to-b from-emerald-400 via-blue-400 to-purple-400 rounded-full" />
+            
+            {/* Points d'intervention */}
+            <div className="space-y-0">
               {recentHistory.map((intervention, index) => {
-                const typeInfo = interventionTypes[intervention.type] || { icon: FileText, color: 'text-gray-500', label: 'Intervention' }
+                const typeInfo = interventionTypes[intervention.type] || { 
+                  icon: FileText, 
+                  gradient: 'from-gray-400 to-gray-500', 
+                  bg: 'bg-gray-50' 
+                }
                 const Icon = typeInfo.icon
                 
                 return (
-                  <div key={intervention.id} className="p-4 flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0`}>
-                      <Icon className={`w-5 h-5 ${typeInfo.color}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900">{intervention.title}</p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
-                        <span>{formatDate(intervention.date)}</span>
-                        <span className="text-gray-300">•</span>
-                        <span>{intervention.mileage.toLocaleString()} km</span>
+                  <div 
+                    key={intervention.id}
+                    className="relative flex items-start gap-4 py-3"
+                  >
+                    {/* Point coloré */}
+                    <div className="relative z-10">
+                      <div className={`
+                        w-8 h-8 rounded-full flex items-center justify-center
+                        bg-gradient-to-br ${typeInfo.gradient}
+                        shadow-lg
+                      `}>
+                        <Icon className="w-4 h-4 text-white" />
                       </div>
-                      <p className="text-xs text-gray-400 mt-1">
+                    </div>
+                    
+                    {/* Contenu */}
+                    <div className="flex-1 min-w-0 pb-3 border-b border-gray-100 last:border-0">
+                      <p className="font-semibold text-gray-900 text-sm">
+                        {intervention.title}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-gray-400">{formatDate(intervention.date)}</span>
+                        <span className="w-1 h-1 rounded-full bg-gray-300" />
+                        <span className="text-xs text-gray-400">{intervention.mileage.toLocaleString()} km</span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5">
                         {intervention.garageName}, {intervention.garageCity}
                       </p>
                     </div>
-                    <BadgeCheck className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                    
+                    {/* Badge certifié */}
+                    <BadgeCheck className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-1" />
                   </div>
                 )
               })}
             </div>
-            
-            {/* Bouton voir plus */}
-            <button 
-              onClick={() => setShowFullHistory(!showFullHistory)}
-              className="w-full p-4 flex items-center justify-center gap-2 text-emerald-600 font-semibold hover:bg-emerald-50 transition-colors border-t border-gray-100"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Voir l'historique complet & Factures</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
           </div>
-        </section>
+          
+          {/* Bouton voir plus */}
+          <button className="
+            w-full p-4 flex items-center justify-center gap-2 
+            bg-gradient-to-r from-gray-50 to-gray-100/50 
+            text-gray-700 font-semibold text-sm
+            border-t border-gray-100
+            active:bg-gray-100 transition-colors
+          ">
+            <FileText className="w-4 h-4" />
+            <span>Voir l'historique complet & Factures</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </section>
 
-        {/* ========== GARAGE DE SUIVI ========== */}
-        {garage && (
-          <section className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">
-              Garage de suivi
-            </h2>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">{garage.name}</p>
-                  <p className="text-sm text-gray-500">{garage.city}</p>
-                </div>
+      {/* ========== SECTION 5: GARAGE DE SUIVI ========== */}
+      {garage && (
+        <section className={`
+          px-4 mt-6
+          ${animateSections ? 'animate-fade-in-up delay-400' : 'opacity-0'}
+        `}>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">
+            Garage de suivi
+          </h2>
+          
+          <div className="bg-white rounded-2xl p-4 shadow-sm shadow-gray-100 border border-gray-100/50">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <Building2 className="w-7 h-7 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-gray-900">{garage.name}</p>
+                <p className="text-sm text-gray-400">{garage.city}</p>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
+                <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
             </div>
-          </section>
-        )}
+          </div>
+        </section>
+      )}
 
-        {/* ========== PIED DE PAGE - ACTIONS ========== */}
-        <section className="space-y-3">
-          {/* Bouton principal - Achat rapport */}
-          <button className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 hover:shadow-xl transition-shadow">
+      {/* ========== FOOTER STICKY - ACTIONS ========== */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-xl border-t border-gray-100 p-4 pb-6">
+        <div className="max-w-lg mx-auto space-y-3">
+          {/* Bouton principal - Dégradé OKAR */}
+          <button className="
+            w-full py-4 rounded-2xl font-bold text-white text-base
+            bg-gradient-to-r from-orange-500 via-rose-500 to-pink-500
+            shadow-lg shadow-rose-500/30
+            flex items-center justify-center gap-2
+            active:scale-[0.98] transition-transform
+          ">
             <Download className="w-5 h-5" />
-            <span>Acheter le rapport complet (1 000 FCFA)</span>
+            <span>Acheter le Rapport Complet (1 000 FCFA)</span>
           </button>
           
-          {/* Bouton secondaire - Contacter */}
-          <button className="w-full py-3 bg-white border-2 border-gray-200 text-gray-700 font-semibold rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors">
+          {/* Bouton secondaire */}
+          <button className="
+            w-full py-3 rounded-2xl font-semibold text-gray-600 text-sm
+            bg-gray-100 border border-gray-200
+            flex items-center justify-center gap-2
+            active:bg-gray-200 transition-colors
+          ">
             <Phone className="w-4 h-4" />
             <span>Contacter le propriétaire</span>
           </button>
-        </section>
+        </div>
+      </div>
 
-        {/* ========== SECTION ANTI-FRAUDE ========== */}
-        <section className="mt-8 pt-6 border-t border-gray-200">
-          <div className="bg-slate-50 rounded-2xl p-4">
-            <div className="flex items-start gap-3">
-              {/* Mini QR Code */}
-              <div className="w-16 h-16 bg-white rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0">
-                <QrCode className="w-8 h-8 text-gray-400" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-gray-900 text-sm">Vérifier l'authenticité</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Scannez ce QR code pour vérifier que ce document est authentique sur okar.sn
-                </p>
-                <Link href="https://okar.sn" className="text-xs text-emerald-600 font-medium mt-1 inline-block">
-                  okar.sn →
-                </Link>
+      {/* ========== SECTION ANTI-FRAUDE ========== */}
+      <section className={`
+        px-4 mt-6 mb-4
+        ${animateSections ? 'animate-fade-in-up delay-500' : 'opacity-0'}
+      `}>
+        <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-2xl p-4 border border-gray-200/50">
+          <div className="flex items-start gap-4">
+            {/* Mini QR Code avec style */}
+            <div className="w-16 h-16 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center flex-shrink-0">
+              <div className="relative">
+                <QrCode className="w-10 h-10 text-gray-300" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-transparent rounded" />
               </div>
             </div>
             
-            {/* Infos de génération */}
-            <div className="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between text-xs text-gray-400">
-              <span>Code: {qrCode?.code || '—'}</span>
-              <span>Généré le {formatDate(data.generatedAt)}</span>
+            <div className="flex-1">
+              <p className="font-bold text-gray-900 text-sm">Vérifier l'authenticité</p>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                Scannez ce QR code pour vérifier que ce document est authentique sur okar.sn
+              </p>
+              <a 
+                href="https://okar.sn" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 mt-2"
+              >
+                okar.sn
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
           </div>
-        </section>
-      </main>
+          
+          {/* Footer info */}
+          <div className="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between text-[11px] text-gray-400">
+            <span className="font-mono">{qrCode?.code || '—'}</span>
+            <span>Généré le {formatDate(data.generatedAt)}</span>
+          </div>
+        </div>
+        
+        {/* Lien signaler */}
+        <p className="text-center text-xs text-gray-400 mt-4">
+          <a href="#" className="underline underline-offset-2">
+            Signaler une erreur
+          </a>
+          {' • '}
+          <a href="https://okar.sn" className="underline underline-offset-2">
+            En savoir plus sur OKAR
+          </a>
+        </p>
+      </section>
     </div>
   )
 }
 
-// Fonction utilitaire pour formater les dates
+// ============================================================================
+// UTILITIES
+// ============================================================================
+
 function formatDate(dateString: string | null): string {
   if (!dateString) return '—'
   try {
