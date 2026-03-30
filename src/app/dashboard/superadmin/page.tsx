@@ -44,7 +44,7 @@ import { Loader2, Search, RefreshCw, Plus, Sparkles, Users, UserPlus, Eye, Key, 
 import { SuperAdminSidebar } from '@/components/okar/superadmin/SuperAdminSidebar'
 import { StatCard } from '@/components/okar/superadmin/StatCard'
 import { GarageValidationTable, Garage } from '@/components/okar/superadmin/GarageValidationTable'
-import { QRCodeGenerator, QRCodeLot } from '@/components/okar/superadmin/QRCodeGenerator'
+import { QRCodeGeneratorPremium, QRCodeLot } from '@/components/okar/superadmin/QRCodeGeneratorPremium'
 import { MyQRCodes, QRCodeItem } from '@/components/okar/superadmin/MyQRCodes'
 import { InteractiveMap, MapMarker } from '@/components/okar/superadmin/InteractiveMap'
 import { VehicleAuditView, VehicleAuditData } from '@/components/okar/superadmin/VehicleAuditView'
@@ -1049,9 +1049,9 @@ function SuperAdminDashboardContent() {
             </div>
           )}
 
-          {/* QR Codes - Génération */}
+          {/* QR Codes - Génération - Design QRBag Premium */}
           {activeTab === 'qrcodes' && (
-            <QRCodeGenerator
+            <QRCodeGeneratorPremium
               onGenerate={handleGenerateQR}
               onAssign={handleAssignQR}
               onExportPDF={handleExportPDF}
