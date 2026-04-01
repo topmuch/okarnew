@@ -341,7 +341,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: 'Erreur lors de l\'activation',
-        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+        details: errorMessage,
+        errorCode: errorCode,
         code: 'ACTIVATION_ERROR'
       },
       { status: 500 }
