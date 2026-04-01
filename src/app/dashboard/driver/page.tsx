@@ -380,26 +380,86 @@ export default function DriverDashboard() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<VehicleStats | null>(null)
 
+  // Charger les données du véhicule et des interventions depuis l'API
   useEffect(() => {
     const timer = requestAnimationFrame(() => {
       setMounted(true)
-      // Dans une vraie implémentation, ces données viendraient de l'API
-      // Pour l'instant, on simule un utilisateur sans véhicule pour montrer l'état vide
-      // Pour tester le dashboard complet, décommenter les lignes suivantes:
-      // setVehicle(mockVehicle as unknown as Vehicle)
-      // setHealth(mockHealth)
-      // setInterventions(mockInterventions)
-      // setStats(mockStats)
-      
-      // État vide pour les nouveaux utilisateurs
-      setVehicle(null)
-      setHealth(null)
-      setInterventions([])
-      setStats(null)
-      setLoading(false)
     })
     return () => cancelAnimationFrame(timer)
   }, [])
+
+  // Fetch vehicle and interventions from API
+  useEffect(() => {
+    const fetchDriverData = async () => {
+      if (!user?.id) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        setLoading(true)
+        
+        // Fetch vehicle data
+        const vehicleResponse = await fetch('/api/driver/vehicle', {
+          credentials: 'include',
+        })
+        
+        if (vehicleResponse.ok) {
+          const vehicleData = await vehicleResponse.json()
+          setVehicle(vehicleData.vehicle)
+          
+          // Set alerts from vehicle data
+          if (vehicleData.vehicle?.alerts) {
+            // Alerts are already in the vehicle object
+          }
+        }
+
+        // Fetch health data
+        const healthResponse = await fetch('/api/driver/health', {
+          credentials: 'include',
+        })
+        
+        if (healthResponse.ok) {
+          const healthData = await healthResponse.json()
+          setHealth(healthData)
+        }
+
+        // Fetch interventions
+        const interventionsResponse = await fetch('/api/driver/interventions', {
+          credentials: 'include',
+        })
+        
+        if (interventionsResponse.ok) {
+          const interventionsData = await interventionsResponse.json()
+          setInterventions(interventionsData.interventions || [])
+        }
+
+        // Fetch stats if needed
+        const statsResponse = await fetch('/api/driver/stats', {
+          credentials: 'include',
+        })
+        
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json()
+          setStats(statsData)
+        }
+
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error)
+        // En cas d'erreur, on garde les données vides
+        setVehicle(null)
+        setHealth(null)
+        setInterventions([])
+        setStats(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (mounted && user) {
+      fetchDriverData()
+    }
+  }, [user, mounted])
 
   const handleLogout = async () => {
     await logout()

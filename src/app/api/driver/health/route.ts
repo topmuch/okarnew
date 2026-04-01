@@ -5,12 +5,14 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id')
+    // Récupérer l'utilisateur connecté via la session
+    const currentUser = await getCurrentUser()
     
-    if (!userId) {
+    if (!currentUser) {
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     // Récupérer le véhicule du conducteur
     const vehicle = await db.vehicle.findFirst({
-      where: { ownerId: userId },
+      where: { ownerId: currentUser.id },
       include: {
         maintenanceHistory: {
           orderBy: { createdAt: 'desc' },

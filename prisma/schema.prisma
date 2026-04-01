@@ -78,6 +78,7 @@ model Garage {
   interventions   MaintenanceRecord[]
   badges          GarageBadge[]
   clients         GarageClient[]
+  pendingActivations PendingActivation[]
 
   @@index([city])
   @@index([isActive])
@@ -164,6 +165,7 @@ model QRCode {
   // Relations
   assignedGarage  Garage?  @relation(fields: [assignedGarageId], references: [id])
   vehicle         Vehicle? @relation(fields: [vehicleId], references: [id])
+  pendingActivation PendingActivation?
 
   @@index([code])
   @@index([status])
@@ -431,6 +433,56 @@ model ValueHistory {
 
   @@index([vehicleId])
   @@index([recordedAt])
+}
+
+// ============================================================================
+// PENDING ACTIVATIONS - Demandes d'activation en attente
+// ============================================================================
+model PendingActivation {
+  id              String   @id @default(cuid())
+  qrCodeId        String   @unique
+  code            String   @unique // Le code QR (OKAR-XXXXX)
+  
+  // Infos propriétaire
+  ownerName       String
+  ownerEmail      String
+  ownerPhone      String?
+  
+  // Infos véhicule
+  plateNumber     String
+  brand           String
+  model           String
+  year            Int?
+  color           String?
+  mileage         Int
+  vin             String?
+  photoUrl        String?
+  
+  // Documents
+  insuranceStartDate DateTime?
+  insuranceEndDate   DateTime?
+  technicalCheckStartDate DateTime?
+  technicalCheckEndDate   DateTime?
+  
+  // Garage assigné (optionnel)
+  assignedGarageId String?
+  
+  // Statut
+  status          String   @default("pending") // pending, approved, rejected
+  rejectionReason String?
+  
+  // Traçabilité
+  createdAt       DateTime @default(now())
+  processedAt     DateTime?
+  processedBy     String?  // ID de l'admin qui a traité
+  
+  // Relations
+  qrCode          QRCode   @relation(fields: [qrCodeId], references: [id])
+  assignedGarage  Garage?  @relation(fields: [assignedGarageId], references: [id])
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([ownerEmail])
 }
 
 // ============================================================================

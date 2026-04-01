@@ -149,7 +149,17 @@ export default function QRCodePublicPage() {
     fetchQRData()
   }, [code])
 
-  // Activer le QR code (nouveau véhicule)
+  // État pour le succès de l'activation
+  const [activationSuccess, setActivationSuccess] = useState(false)
+  const [activationData, setActivationData] = useState<{
+    plateNumber: string
+    brand: string
+    model: string
+    ownerEmail: string
+    ownerPhone?: string
+  } | null>(null)
+
+  // Activer le QR code (nouveau véhicule) - Crée une demande en attente
   const handleActivate = async (e: React.FormEvent) => {
     e.preventDefault()
     setActivating(true)
@@ -180,8 +190,12 @@ export default function QRCodePublicPage() {
 
       const data = await response.json()
 
-      if (data.success) {
-        // Rediriger vers l'inscription pour créer un compte
+      if (data.success && data.pending) {
+        // Afficher le message de succès - demande en attente de validation
+        setActivationData(data.data)
+        setActivationSuccess(true)
+      } else if (data.success) {
+        // Ancien comportement - ne devrait plus arriver
         router.push(`/register?vehicleId=${data.vehicleId}&qrCode=${code}`)
       } else {
         setError(data.error || 'Erreur lors de l\'activation')
@@ -359,6 +373,119 @@ export default function QRCodePublicPage() {
 
   // QR Code en stock - Formulaire d'activation
   if (qrData.status === 'stock') {
+    // Afficher le message de succès après activation
+    if (activationSuccess) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-blue-50">
+          <header className="bg-white/80 backdrop-blur-md border-b border-gray-100">
+            <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+              <Link href="/" className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 via-pink-500 to-blue-500 rounded-lg flex items-center justify-center">
+                  <Car className="h-5 w-5 text-white" />
+                </div>
+                <span className="font-bold text-xl bg-gradient-to-r from-orange-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+                  OKAR
+                </span>
+              </Link>
+            </div>
+          </header>
+
+          <main className="container mx-auto px-4 py-8 max-w-xl">
+            <Card className="border-0 shadow-xl overflow-hidden">
+              {/* Header avec fond vert succès */}
+              <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-6 text-center">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="h-10 w-10 text-white" />
+                </div>
+                <h1 className="text-2xl font-bold text-white mb-2">Demande envoyée !</h1>
+                <p className="text-green-50 text-sm">Votre activation est en cours de traitement</p>
+              </div>
+
+              <CardContent className="p-6 space-y-6">
+                {/* Message principal */}
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-green-800 font-medium text-lg leading-relaxed">
+                        Votre demande a été envoyée, en cours de traitement.
+                      </p>
+                      <p className="text-green-700 mt-2">
+                        Vous recevrez vos identifiants par WhatsApp.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Récapitulatif */}
+                {activationData && (
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-gray-500" />
+                      Récapitulatif de votre demande
+                    </h3>
+                    <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500 text-sm">Véhicule</span>
+                        <span className="font-medium text-gray-900">
+                          {activationData.brand} {activationData.model}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500 text-sm">Plaque</span>
+                        <span className="font-mono font-bold text-gray-900">{activationData.plateNumber}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500 text-sm">Email</span>
+                        <span className="text-gray-900 text-sm">{activationData.ownerEmail}</span>
+                      </div>
+                      {activationData.ownerPhone && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-500 text-sm">Téléphone</span>
+                          <span className="text-gray-900 text-sm">{activationData.ownerPhone}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Info box */}
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-blue-700">
+                      <p className="font-medium">Prochaines étapes :</p>
+                      <ul className="mt-2 space-y-1 list-disc list-inside">
+                        <li>Notre équipe vérifie votre demande</li>
+                        <li>Création de votre compte OKAR</li>
+                        <li>Réception de vos identifiants par WhatsApp</li>
+                        <li>Accès à votre passeport numérique automobile</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Boutons */}
+                <div className="flex flex-col gap-3 pt-2">
+                  <Link href="/" className="w-full">
+                    <Button variant="outline" className="w-full h-11 rounded-xl border-gray-300">
+                      Retour à l'accueil
+                    </Button>
+                  </Link>
+                  <p className="text-center text-xs text-gray-400">
+                    Questions ? Contactez-nous sur WhatsApp : +221 77 123 45 67
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+      )
+    }
+
+    // Formulaire d'activation normal
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-blue-50">
         <header className="bg-white/80 backdrop-blur-md border-b border-gray-100">

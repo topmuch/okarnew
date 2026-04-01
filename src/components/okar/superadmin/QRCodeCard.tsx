@@ -8,6 +8,7 @@
  * - Export PDF fonctionne
  * - Lien cliquable sur le QR code
  * - QR code AGRANDI pour meilleure visibilité
+ * - Suppression de QR code
  */
 
 'use client'
@@ -16,6 +17,13 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +51,8 @@ import {
   Loader2,
   Link,
   Maximize2,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { generateQRCodeDataUrl, getPublicQRUrl } from '@/lib/qrcode'
@@ -72,6 +82,7 @@ interface QRCodeCardProps {
   onViewVehicle?: (vehicleId: string) => void
   onViewDetails?: (qrCode: QRCodeCardData) => void
   onCopyCode?: (code: string) => void
+  onDelete?: (qrCode: QRCodeCardData) => Promise<void>
 }
 
 // Configuration des statuts
@@ -105,12 +116,15 @@ export function QRCodeCard({
   onViewVehicle,
   onViewDetails,
   onCopyCode,
+  onDelete,
 }: QRCodeCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [copied, setCopied] = useState(false)
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const status = statusConfig[qrCode.status]
   const StatusIcon = status.icon
@@ -168,6 +182,21 @@ export function QRCodeCard({
 
   const handleOpenUrl = () => {
     window.open(publicUrl, '_blank')
+  }
+
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!onDelete) return
+    setIsDeleting(true)
+    try {
+      await onDelete(qrCode)
+      setDeleteDialogOpen(false)
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -335,7 +364,84 @@ export function QRCodeCard({
           )}
           PDF
         </Button>
+        {onDelete && (
+          <Button
+            onClick={handleDeleteClick}
+            variant="ghost"
+            size="sm"
+            className="text-[#EF4444] hover:text-[#FCA5A5] hover:bg-[#EF4444]/10"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </CardFooter>
+
+      {/* Dialog de confirmation de suppression */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="bg-[#1E293B] border-[#334155] text-white max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-[#FCA5A5] flex items-center gap-3 text-lg font-semibold">
+              <div className="w-8 h-8 rounded-lg bg-[#EF4444]/20 flex items-center justify-center">
+                <Trash2 className="h-4 w-4 text-[#EF4444]" />
+              </div>
+              Confirmer la suppression
+            </DialogTitle>
+            <DialogDescription className="text-[#94A3B8]">
+              Êtes-vous sûr de vouloir supprimer ce QR code ?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="p-4 bg-[#0F172A]/50 rounded-xl border border-white/5 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-[#94A3B8] text-sm">Code:</span>
+                <span className="text-white font-mono text-sm">{qrCode.code}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#94A3B8] text-sm">Statut:</span>
+                <Badge className={cn('text-xs', status.className)}>
+                  {status.label}
+                </Badge>
+              </div>
+              {qrCode.status === 'active' && (
+                <div className="mt-3 p-3 bg-[#F59E0B]/10 border border-[#F59E0B]/20 rounded-lg">
+                  <p className="text-[#FBBF24] text-sm flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    Attention: Ce QR code est actif et lié à un véhicule
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              className="flex-1 border-[#334155] text-[#94A3B8] hover:text-white hover:bg-white/5"
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="flex-1 bg-[#EF4444] hover:bg-[#DC2626] text-white shadow-lg shadow-[#EF4444]/20"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Supprimer
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

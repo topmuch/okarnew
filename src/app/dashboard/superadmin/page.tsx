@@ -1203,6 +1203,9 @@ function SuperAdminDashboardContent() {
                         qrCode={qrCode}
                         onExportPDF={handleExportPDF}
                         onViewVehicle={handleViewVehicle}
+                        onDelete={async (qr) => {
+                          await handleDeleteQR(qr.id)
+                        }}
                       />
                     ))}
                 </div>
