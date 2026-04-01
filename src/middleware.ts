@@ -25,6 +25,7 @@ const PUBLIC_PREFIXES = [
   '/garage/',      // Profil public des garages
   '/api/auth/',    // Routes d'authentification
   '/api/public/',  // API publique
+  '/api/debug/',   // API debug pour diagnostics
   '/api/insurance/providers',  // Liste des assureurs (publique pour le comparateur)
 ]
 
