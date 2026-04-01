@@ -329,31 +329,29 @@ async function seedQRCodes(garages: { id: string; businessName: string; userId: 
     totalCreated++
   }
   
-  // Lot 4: 100 codes (50 actifs pour véhicules, 50 stock)
-  console.log('   📦 Lot 4: 100 codes mixtes (50 actifs, 50 stock)...')
+  // Lot 4: 100 codes (tous en stock - seront activés par l'API)
+  console.log('   📦 Lot 4: 100 codes particuliers (stock)...')
   for (let i = 0; i < 100; i++) {
     await prisma.qRCode.create({
       data: {
         code: generateQRCode(),
         lotId: 'LOT-004',
-        type: i < 50 ? 'particulier' : 'garage',
-        status: i < 50 ? 'active' : 'stock',
-        assignedGarageId: i >= 50 ? garage1.id : null,
-        // Les codes actifs seront liés aux véhicules plus tard
+        type: 'particulier',
+        status: 'stock', // TOUJOURS stock - l'activation se fait via l'API
       }
     })
     totalCreated++
   }
   
-  // Lot 5: 100 codes (10 perdus/volés, 90 stock)
-  console.log('   📦 Lot 5: 100 codes (10 perdus, 90 stock)...')
+  // Lot 5: 100 codes (tous en stock - statut 'lost' sera géré par l'API)
+  console.log('   📦 Lot 5: 100 codes (stock)...')
   for (let i = 0; i < 100; i++) {
     await prisma.qRCode.create({
       data: {
         code: generateQRCode(),
         lotId: 'LOT-005',
         type: 'particulier',
-        status: i < 10 ? 'lost' : 'stock',
+        status: 'stock', // TOUJOURS stock - le statut 'lost' sera géré par l'API
       }
     })
     totalCreated++
@@ -405,11 +403,13 @@ async function seedVehicles(
   const vehicles: { id: string; plateNumber: string; brand: string; model: string }[] = []
   const activeGarage = garages[0] // Auto Service Dakar
   
-  // Récupérer les QR codes actifs disponibles
-  const activeQRCodes = await prisma.qRCode.findMany({
-    where: { status: 'active', vehicleId: null },
+  // Récupérer les QR codes en stock disponibles (pas 'active'!)
+  const stockQRCodes = await prisma.qRCode.findMany({
+    where: { status: 'stock', vehicleId: null },
     take: 10
   })
+  
+  console.log(`   📦 ${stockQRCodes.length} QR codes en stock disponibles pour les véhicules`)
   
   // Health scores: 3 verts, 5 oranges, 2 rouges
   const healthScores = [95, 92, 88, 65, 60, 55, 50, 45, 25, 20]
@@ -436,40 +436,47 @@ async function seedVehicles(
       continue
     }
     
-    const qrCode = activeQRCodes[i]
+    const qrCode = stockQRCodes[i]
     
-    const vehicle = await prisma.vehicle.create({
-      data: {
-        plateNumber,
-        brand: data.brand,
-        model: data.model,
-        year: data.year,
-        color: data.color,
-        mileage: randomInt(20000, 150000),
-        ownerId: driver.id,
-        garageId: activeGarage.id,
-        healthScore: healthScores[i],
-        qrCodeId: qrCode?.id,
-        technicalControlDate: randomDate(new Date(), new Date('2025-12-31')),
-        technicalControlStatus: i < 5 ? 'valid' : i < 8 ? 'expiring_soon' : 'expired',
-        insuranceExpiryDate: randomDate(new Date(), new Date('2025-12-31')),
-        insuranceStatus: i < 4 ? 'valid' : i < 7 ? 'expiring_soon' : 'expired',
-      }
-    })
-    
-    // Lier le QR code au véhicule
-    if (qrCode) {
-      await prisma.qRCode.update({
-        where: { id: qrCode.id },
-        data: { 
-          vehicleId: vehicle.id,
-          activatedAt: randomDate(new Date('2023-01-01'), new Date()),
-          activatedByName: driver.name,
-          activatedByEmail: driver.email,
-          activatedByPhone: generatePhone(),
+    // Utiliser une transaction pour garantir l'intégrité
+    const vehicle = await prisma.$transaction(async (tx) => {
+      // Créer le véhicule
+      const newVehicle = await tx.vehicle.create({
+        data: {
+          plateNumber,
+          brand: data.brand,
+          model: data.model,
+          year: data.year,
+          color: data.color,
+          mileage: randomInt(20000, 150000),
+          ownerId: driver.id,
+          garageId: activeGarage.id,
+          healthScore: healthScores[i],
+          qrCodeId: qrCode?.id,
+          technicalControlDate: randomDate(new Date(), new Date('2025-12-31')),
+          technicalControlStatus: i < 5 ? 'valid' : i < 8 ? 'expiring_soon' : 'expired',
+          insuranceExpiryDate: randomDate(new Date(), new Date('2025-12-31')),
+          insuranceStatus: i < 4 ? 'valid' : i < 7 ? 'expiring_soon' : 'expired',
         }
       })
-    }
+      
+      // Lier le QR code au véhicule et le passer en 'active'
+      if (qrCode) {
+        await tx.qRCode.update({
+          where: { id: qrCode.id },
+          data: { 
+            status: 'active', // ⭐ Passer en 'active'
+            vehicleId: newVehicle.id,
+            activatedAt: randomDate(new Date('2023-01-01'), new Date()),
+            activatedByName: driver.name,
+            activatedByEmail: driver.email,
+            activatedByPhone: generatePhone(),
+          }
+        })
+      }
+      
+      return newVehicle
+    })
     
     // Déterminer la couleur de santé
     const healthColor = healthScores[i] >= 80 ? '🟢' : healthScores[i] >= 40 ? '🟠' : '🔴'
