@@ -21,6 +21,7 @@ export async function GET() {
     { name: 'technicalCheckStartDate', type: 'DATETIME' },
     { name: 'technicalCheckEndDate', type: 'DATETIME' },
     { name: 'technicalCheckStatus', type: 'TEXT DEFAULT "valid"' },
+    { name: 'photoUrl', type: 'TEXT' },
   ]
 
   for (const col of columnsToAdd) {
