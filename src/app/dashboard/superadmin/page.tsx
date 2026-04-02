@@ -62,6 +62,7 @@ import { BlogCard, BlogCardData } from '@/components/okar/superadmin/BlogCard'
 import { BlogEditor } from '@/components/okar/superadmin/BlogEditor'
 import { AdvertisementsModule } from '@/components/okar/superadmin/AdvertisementsModule'
 import { SubscriptionsModule } from '@/components/okar/superadmin/SubscriptionsModule'
+import { SuperadminAssistanceModule } from '@/components/okar/superadmin/AssistanceModule'
 
 // Types
 interface Stats {
@@ -1664,6 +1665,21 @@ function SuperAdminDashboardContent() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* Publicités */}
+          {activeTab === 'advertisements' && (
+            <AdvertisementsModule />
+          )}
+
+          {/* Abonnements */}
+          {activeTab === 'subscriptions' && (
+            <SubscriptionsModule />
+          )}
+
+          {/* Messages / Support */}
+          {activeTab === 'messages' && (
+            <SuperadminAssistanceModule />
           )}
         </div>
       </main>
