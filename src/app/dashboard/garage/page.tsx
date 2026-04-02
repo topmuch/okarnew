@@ -225,17 +225,18 @@ export default function GaragePage() {
 }
 
 // Dashboard Overview Component - "Clean Focus"
-function DashboardOverview({ 
-  user, 
+function DashboardOverview({
+  user,
   onOpenScanner,
   onOpenIntervention
-}: { 
+}: {
   user: any
   onOpenScanner: () => void
   onOpenIntervention: () => void
 }) {
   const [stats, setStats] = useState<any>(null)
   const [alerts, setAlerts] = useState<any[]>([])
+  const [advertisements, setAdvertisements] = useState<any[]>([])
 
   useEffect(() => {
     fetch('/api/garage/stats')
@@ -245,7 +246,7 @@ function DashboardOverview({
           setStats(data.data)
         }
       })
-    
+
     // Simuler des alertes (différé pour éviter les cascading renders)
     requestAnimationFrame(() => {
       setAlerts([
@@ -253,6 +254,16 @@ function DashboardOverview({
         { type: 'urgent', message: '2 CT expirés', count: 2 },
       ])
     })
+
+    // Fetch advertisements for garage dashboard
+    fetch('/api/public/advertisements?position=garage_dashboard_top')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          setAdvertisements(data.data)
+        }
+      })
+      .catch(err => console.error('Error fetching ads:', err))
   }, [])
 
   const formatCurrency = (amount: number) => {
@@ -486,37 +497,75 @@ function DashboardOverview({
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          SECTION 5: PUBLICITÉ & GAMIFICATION - Déplacé en bas, discret
+          SECTION 5: PUBLICITÉS - Bannières dynamiques
       ═══════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Promo discrète */}
-        <div className="bg-gradient-to-r from-[#1E293B] to-[#334155]/50 rounded-xl p-4 border border-[#334155]/50 flex items-center gap-4">
-          <div className="w-10 h-10 bg-[#F59E0B]/10 rounded-lg flex items-center justify-center shrink-0">
-            <Sparkles className="h-5 w-5 text-[#FBBF24]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-medium truncate">Promo Partenaires</p>
-            <p className="text-[#64748B] text-xs truncate">-15% sur les pneus chez nos partenaires</p>
-          </div>
-          <ChevronRight className="h-4 w-4 text-[#64748B] shrink-0" />
+      {advertisements.length > 0 && (
+        <div className="space-y-4">
+          {advertisements.slice(0, 2).map((ad, index) => (
+            <a
+              key={ad.id}
+              href={ad.linkUrl || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block bg-gradient-to-r from-[#1E293B] to-[#334155]/50 rounded-xl overflow-hidden border border-[#334155]/50 hover:border-[#475569] transition-all group"
+            >
+              <div className="flex items-center gap-4 p-4">
+                {ad.imageUrl ? (
+                  <div className="w-20 h-14 rounded-lg overflow-hidden shrink-0">
+                    <img
+                      src={ad.imageUrl}
+                      alt={ad.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-20 h-14 rounded-lg bg-[#F59E0B]/10 flex items-center justify-center shrink-0">
+                    <Sparkles className="h-6 w-6 text-[#FBBF24]" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">{ad.title}</p>
+                  <p className="text-[#64748B] text-xs truncate">{ad.description || 'Cliquez pour en savoir plus'}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-[#64748B] group-hover:text-white group-hover:translate-x-1 transition-all shrink-0" />
+              </div>
+            </a>
+          ))}
         </div>
+      )}
 
-        {/* Badge/Réputation */}
-        <div className="bg-[#1E293B] rounded-xl p-4 border border-[#1E293B] flex items-center gap-4">
-          <div className="w-10 h-10 bg-[#F59E0B]/10 rounded-lg flex items-center justify-center shrink-0">
-            <span className="text-lg">🏆</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-medium">Top 10% OKAR</p>
-            <div className="flex items-center gap-1 mt-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <span key={star} className="text-[#FBBF24] text-xs">★</span>
-              ))}
-              <span className="text-[#94A3B8] text-xs ml-1">{stats?.note || '4.8'}</span>
+      {/* Fallback si pas de publicités */}
+      {advertisements.length === 0 && (
+        <div className="grid grid-cols-2 gap-4">
+          {/* Badge/Réputation */}
+          <div className="bg-[#1E293B] rounded-xl p-4 border border-[#1E293B] flex items-center gap-4">
+            <div className="w-10 h-10 bg-[#F59E0B]/10 rounded-lg flex items-center justify-center shrink-0">
+              <span className="text-lg">🏆</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-sm font-medium">Top 10% OKAR</p>
+              <div className="flex items-center gap-1 mt-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span key={star} className="text-[#FBBF24] text-xs">★</span>
+                ))}
+                <span className="text-[#94A3B8] text-xs ml-1">{stats?.note || '4.8'}</span>
+              </div>
             </div>
           </div>
+
+          {/* Gamification */}
+          <div className="bg-gradient-to-r from-[#1E293B] to-[#334155]/50 rounded-xl p-4 border border-[#334155]/50 flex items-center gap-4">
+            <div className="w-10 h-10 bg-[#F59E0B]/10 rounded-lg flex items-center justify-center shrink-0">
+              <Sparkles className="h-5 w-5 text-[#FBBF24]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-sm font-medium truncate">Objectif du mois</p>
+              <p className="text-[#64748B] text-xs truncate">5 interventions = badge qualité</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-[#64748B] shrink-0" />
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   )

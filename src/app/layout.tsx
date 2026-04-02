@@ -10,6 +10,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthProvider";
 import { InstallPrompt } from "@/components/okar/InstallPrompt";
 import { MobileNav } from "@/components/okar/MobileNav";
@@ -120,6 +121,7 @@ export default function RootLayout({
           {children}
         </AuthProvider>
         <Toaster />
+        <SonnerToaster position="top-right" richColors closeButton />
         <InstallPrompt />
         <MobileNav />
       </body>
