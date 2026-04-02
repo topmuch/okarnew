@@ -21,7 +21,10 @@ model User {
   phone             String?
   role              String   @default("driver") // superadmin, garage_certified, garage_pending, driver
   isApproved        Boolean  @default(false)    // Pour validation des garages
-  subscriptionStatus String  @default("free")   // free, premium
+  subscriptionStatus String  @default("free")   // free, active, premium, expired
+  subscriptionPlan  String   @default("free")   // free, basic, premium, enterprise
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

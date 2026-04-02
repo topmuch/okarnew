@@ -31,6 +31,8 @@ import {
   MessageSquare,
   Bell,
   Newspaper,
+  Megaphone,
+  CreditCard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -87,6 +89,16 @@ const baseNavItems: SidebarNavItem[] = [
     icon: Newspaper,
     label: 'Blog',
     tab: 'blog',
+  },
+  {
+    icon: Megaphone,
+    label: 'Publicités',
+    tab: 'advertisements',
+  },
+  {
+    icon: CreditCard,
+    label: 'Abonnements',
+    tab: 'subscriptions',
   },
   {
     icon: FileText,

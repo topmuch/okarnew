@@ -60,6 +60,8 @@ import { QRCodeCard, QRCodeCardData } from '@/components/okar/superadmin/QRCodeC
 import { RequestCard, RequestData } from '@/components/okar/superadmin/RequestCard'
 import { BlogCard, BlogCardData } from '@/components/okar/superadmin/BlogCard'
 import { BlogEditor } from '@/components/okar/superadmin/BlogEditor'
+import { AdvertisementsModule } from '@/components/okar/superadmin/AdvertisementsModule'
+import { SubscriptionsModule } from '@/components/okar/superadmin/SubscriptionsModule'
 
 // Types
 interface Stats {
@@ -865,6 +867,8 @@ function SuperAdminDashboardContent() {
                 {activeTab === 'map' && 'Carte Interactive'}
                 {activeTab === 'vehicles' && 'Véhicules'}
                 {activeTab === 'blog' && 'Gestion du Blog'}
+                {activeTab === 'advertisements' && 'Publicités'}
+                {activeTab === 'subscriptions' && 'Abonnements'}
                 {activeTab === 'audit' && 'Logs d\'Audit'}
                 {activeTab === 'settings' && 'Paramètres'}
               </h1>
