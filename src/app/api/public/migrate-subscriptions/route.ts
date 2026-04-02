@@ -12,37 +12,49 @@ import { db } from '@/lib/db'
 async function runMigration() {
   const results: string[] = []
 
-  // Vérifier si les colonnes existent déjà
+  // Ajouter la colonne subscriptionPlan (ignorer si existe)
   try {
-    await db.$executeRaw`SELECT subscriptionPlan FROM User LIMIT 1`
-    results.push('subscriptionPlan column already exists')
-  } catch (e) {
-    // Ajouter la colonne subscriptionPlan
     await db.$executeRaw`ALTER TABLE User ADD COLUMN subscriptionPlan TEXT DEFAULT 'free'`
     results.push('Added subscriptionPlan column')
+  } catch (e: any) {
+    if (e.message?.includes('duplicate column')) {
+      results.push('subscriptionPlan column already exists')
+    } else {
+      results.push(`subscriptionPlan: ${e.message}`)
+    }
   }
 
+  // Ajouter la colonne subscriptionStartDate (ignorer si existe)
   try {
-    await db.$executeRaw`SELECT subscriptionStartDate FROM User LIMIT 1`
-    results.push('subscriptionStartDate column already exists')
-  } catch (e) {
-    // Ajouter la colonne subscriptionStartDate
     await db.$executeRaw`ALTER TABLE User ADD COLUMN subscriptionStartDate DATETIME`
     results.push('Added subscriptionStartDate column')
+  } catch (e: any) {
+    if (e.message?.includes('duplicate column')) {
+      results.push('subscriptionStartDate column already exists')
+    } else {
+      results.push(`subscriptionStartDate: ${e.message}`)
+    }
   }
 
+  // Ajouter la colonne subscriptionEndDate (ignorer si existe)
   try {
-    await db.$executeRaw`SELECT subscriptionEndDate FROM User LIMIT 1`
-    results.push('subscriptionEndDate column already exists')
-  } catch (e) {
-    // Ajouter la colonne subscriptionEndDate
     await db.$executeRaw`ALTER TABLE User ADD COLUMN subscriptionEndDate DATETIME`
     results.push('Added subscriptionEndDate column')
+  } catch (e: any) {
+    if (e.message?.includes('duplicate column')) {
+      results.push('subscriptionEndDate column already exists')
+    } else {
+      results.push(`subscriptionEndDate: ${e.message}`)
+    }
   }
 
   // Mettre à jour les utilisateurs existants avec des valeurs par défaut
-  await db.$executeRaw`UPDATE User SET subscriptionPlan = 'free' WHERE subscriptionPlan IS NULL`
-  results.push('Updated existing users with default subscriptionPlan')
+  try {
+    await db.$executeRaw`UPDATE User SET subscriptionPlan = 'free' WHERE subscriptionPlan IS NULL`
+    results.push('Updated existing users with default subscriptionPlan')
+  } catch (e: any) {
+    results.push(`Update users: ${e.message}`)
+  }
 
   return results
 }
