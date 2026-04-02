@@ -98,10 +98,41 @@ export async function POST(request: NextRequest) {
       readingTime,
     } = body
 
-    // Validation
-    if (!title || !slug || !content || !category || !authorId) {
+    // Log pour debug
+    console.log('Blog POST request:', { 
+      title, 
+      slug, 
+      category, 
+      authorId, 
+      contentLength: content?.length,
+      hasExcerpt: !!excerpt 
+    })
+
+    // Validation détaillée
+    const missingFields = []
+    if (!title?.trim()) missingFields.push('titre')
+    if (!slug?.trim()) missingFields.push('slug')
+    if (!content?.trim()) missingFields.push('contenu')
+    if (!category) missingFields.push('catégorie')
+    if (!authorId) missingFields.push('auteur (authorId)')
+
+    if (missingFields.length > 0) {
+      console.log('Missing fields:', missingFields)
       return NextResponse.json(
-        { success: false, error: 'Titre, slug, contenu, catégorie et auteur sont requis' },
+        { success: false, error: `Champs manquants: ${missingFields.join(', ')}` },
+        { status: 400 }
+      )
+    }
+
+    // Vérifier que l'auteur existe
+    const author = await db.user.findUnique({
+      where: { id: authorId }
+    })
+
+    if (!author) {
+      console.log('Author not found:', authorId)
+      return NextResponse.json(
+        { success: false, error: 'Auteur non trouvé. Veuillez vous reconnecter.' },
         { status: 400 }
       )
     }
@@ -121,22 +152,25 @@ export async function POST(request: NextRequest) {
     // Calculer le temps de lecture si non fourni (~200 mots/minute)
     const calculatedReadingTime = readingTime || Math.max(1, Math.ceil(content.split(/\s+/).length / 200))
 
+    // Préparer l'excerpt
+    const finalExcerpt = excerpt?.trim() || content.slice(0, 160) + '...'
+
     // Créer l'article
     const post = await db.blogPost.create({
       data: {
-        title,
-        slug,
-        content,
-        excerpt: excerpt || content.slice(0, 160) + '...',
-        coverImage,
+        title: title.trim(),
+        slug: slug.trim(),
+        content: content.trim(),
+        excerpt: finalExcerpt,
+        coverImage: coverImage?.trim() || null,
         category,
-        tags: tags ? JSON.stringify(tags) : null,
+        tags: tags && Array.isArray(tags) ? JSON.stringify(tags) : null,
         status,
         authorId,
         publishedAt: status === 'published' ? (publishedAt ? new Date(publishedAt) : new Date()) : null,
         readingTime: calculatedReadingTime,
-        metaTitle: metaTitle || title,
-        metaDescription: metaDescription || excerpt,
+        metaTitle: metaTitle?.trim() || title.trim(),
+        metaDescription: metaDescription?.trim() || finalExcerpt,
       },
       include: {
         author: {
@@ -149,29 +183,60 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Log d'audit
-    await db.auditLog.create({
-      data: {
-        action: 'BLOG_POST_CREATED',
-        entityType: 'blog_post',
-        entityId: post.id,
-        details: JSON.stringify({
-          title: post.title,
-          slug: post.slug,
-          status: post.status,
-        }),
-      }
-    })
+    // Log d'audit (non-bloquant)
+    try {
+      await db.auditLog.create({
+        data: {
+          action: 'BLOG_POST_CREATED',
+          entityType: 'blog_post',
+          entityId: post.id,
+          details: JSON.stringify({
+            title: post.title,
+            slug: post.slug,
+            status: post.status,
+          }),
+        },
+      })
+    } catch (auditError) {
+      console.log('Audit log error (non-critical):', auditError)
+    }
+
+    console.log('Blog post created successfully:', post.id)
 
     return NextResponse.json({
       success: true,
       post
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur création article:', error)
+    
+    // Erreur Prisma spécifique - table n'existe pas
+    if (error.code === 'P2021') {
+      return NextResponse.json(
+        { success: false, error: 'Table BlogPost non trouvée. Veuillez exécuter la migration de la base de données.' },
+        { status: 500 }
+      )
+    }
+    
+    // Erreur de contrainte unique
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { success: false, error: 'Un article avec ce slug existe déjà.' },
+        { status: 400 }
+      )
+    }
+    
+    // Erreur de clé étrangère
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { success: false, error: 'Auteur non trouvé dans la base de données.' },
+        { status: 400 }
+      )
+    }
+    
     return NextResponse.json(
-      { success: false, error: 'Erreur lors de la création de l\'article' },
+      { success: false, error: error.message || 'Erreur lors de la création de l\'article' },
       { status: 500 }
     )
   }

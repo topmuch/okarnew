@@ -696,9 +696,22 @@ function SuperAdminDashboardContent() {
 
   // Sauvegarder un article (création ou édition)
   const handleSaveBlogPost = async (data: Partial<BlogCardData>) => {
+    // Vérifier que l'utilisateur est connecté
+    if (!user?.id) {
+      throw new Error('Vous devez être connecté pour créer un article')
+    }
+
     const isEditing = editingPost !== null
     const url = isEditing ? `/api/superadmin/blog/${editingPost.id}` : '/api/superadmin/blog'
     const method = isEditing ? 'PUT' : 'POST'
+    
+    console.log('handleSaveBlogPost:', { 
+      isEditing, 
+      url, 
+      authorId: user.id,
+      title: data.title,
+      category: data.category 
+    })
     
     const response = await fetch(url, {
       method,
@@ -706,7 +719,7 @@ function SuperAdminDashboardContent() {
       credentials: 'include',
       body: JSON.stringify({
         ...data,
-        authorId: user?.id,
+        authorId: user.id, // Utiliser l'ID de l'utilisateur connecté
       }),
     })
     
@@ -715,6 +728,7 @@ function SuperAdminDashboardContent() {
       setEditingPost(null)
     } else {
       const error = await response.json()
+      console.error('Blog save error:', error)
       throw new Error(error.error || 'Erreur lors de la sauvegarde')
     }
   }
