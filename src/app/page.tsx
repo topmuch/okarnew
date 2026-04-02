@@ -43,6 +43,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { OrganizationJsonLd, WebSiteJsonLd, ServiceJsonLd } from '@/components/seo/JsonLd'
 
 export default function LandingPage() {
   const [searchPlate, setSearchPlate] = useState('')
@@ -90,6 +91,38 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1F2937] font-sans relative overflow-x-hidden">
+      {/* SEO Structured Data - JSON-LD */}
+      <OrganizationJsonLd
+        name="OKAR"
+        url="https://shopqr.pro"
+        logo="https://shopqr.pro/icons/icon-512x512.png"
+        description="Le carnet d'entretien numérique inviolable pour votre véhicule au Sénégal. Vérifiez l'historique de n'importe quel véhicule en un scan QR."
+        telephone="+221784858226"
+        email="contact@okar.sn"
+        address={{
+          streetAddress: "Dakar",
+          addressLocality: "Dakar",
+          addressCountry: "SN"
+        }}
+      />
+      <WebSiteJsonLd
+        name="OKAR"
+        url="https://shopqr.pro"
+        description="Passeport Numérique Automobile au Sénégal - Carnet d'entretien numérique inviolable"
+        potentialAction={{
+          target: "https://shopqr.pro/search?q={search_term_string}",
+          queryInput: "required name=search_term_string"
+        }}
+      />
+      <ServiceJsonLd
+        name="Vérification Historique Véhicule"
+        description="Vérifiez l'historique complet d'un véhicule: kilométrage, entretien, contrôles techniques"
+        provider="OKAR"
+        url="https://shopqr.pro"
+        serviceType="Automotive Service"
+        areaServed="Sénégal"
+      />
+      
       {/* Formes organiques abstraites - Arrière-plan */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         {/* Cercle doré flou - Haut droit */}

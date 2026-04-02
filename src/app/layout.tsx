@@ -40,12 +40,14 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "OKAR - Passeport Numérique Automobile",
+    default: "OKAR - Passeport Numérique Automobile au Sénégal",
     template: "%s | OKAR",
   },
-  description: "Le carnet d'entretien numérique inviolable pour votre véhicule. Vérifiez l'historique de n'importe quel véhicule au Sénégal en un scan QR.",
-  keywords: ["OKAR", "passeport automobile", "carnet entretien", "Sénégal", "voiture", "historique véhicule", "QR code"],
+  description: "Le carnet d'entretien numérique inviolable pour votre véhicule. Vérifiez l'historique de n'importe quel véhicule au Sénégal en un scan QR. #1 du passeport automobile digital.",
+  keywords: ["OKAR", "passeport automobile", "carnet entretien", "Sénégal", "voiture", "historique véhicule", "QR code", "contrôle technique", "garage", "automobile Dakar", "voiture occasion Sénégal", "vérification véhicule"],
   authors: [{ name: "OKAR Team" }],
+  creator: "OKAR",
+  publisher: "OKAR",
   
   // Icons
   icons: {
@@ -70,28 +72,51 @@ export const metadata: Metadata = {
   
   // OpenGraph
   openGraph: {
-    title: "OKAR - Passeport Numérique Automobile",
-    description: "Le carnet d'entretien numérique inviolable pour votre véhicule.",
+    title: "OKAR - Passeport Numérique Automobile au Sénégal",
+    description: "Le carnet d'entretien numérique inviolable pour votre véhicule. Vérifiez l'historique de n'importe quel véhicule au Sénégal en un scan QR.",
     type: "website",
     locale: "fr_SN",
+    url: "https://shopqr.pro",
     siteName: "OKAR",
+    images: [
+      {
+        url: "https://shopqr.pro/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "OKAR - Passeport Numérique Automobile",
+      },
+    ],
   },
   
   // Twitter
   twitter: {
     card: "summary_large_image",
-    title: "OKAR - Passeport Numérique Automobile",
+    title: "OKAR - Passeport Numérique Automobile au Sénégal",
     description: "Le carnet d'entretien numérique inviolable pour votre véhicule.",
+    images: ["https://shopqr.pro/og-image.png"],
   },
   
   // PWA
   manifest: "/manifest.json",
   
+  // Alternates
+  alternates: {
+    canonical: "https://shopqr.pro",
+  },
+  
   // Autres
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
+  category: "automotive",
 };
 
 export default function RootLayout({
