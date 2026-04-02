@@ -33,3 +33,6 @@ export { SupportCenter } from './SupportCenter'
 
 // Comparateur d'Assurance
 export { InsuranceComparator } from './InsuranceComparator'
+
+// Module Publicités
+export { AdsModule } from './AdsModule'

@@ -19,8 +19,10 @@ import { ChantiersModule } from '@/components/okar/garage/ChantiersModule'
 import { ClientsModule } from '@/components/okar/garage/ClientsModule'
 import { SettingsModule } from '@/components/okar/garage/SettingsModule'
 import { MessagesModule } from '@/components/okar/garage/MessagesModule'
+import { SubscriptionModule } from '@/components/okar/garage/SubscriptionModule'
 import { QRScannerModal } from '@/components/okar/garage/QRScannerModal'
 import { InterventionFormModal } from '@/components/okar/garage/InterventionFormModal'
+import { BlogModule } from '@/components/okar/shared/BlogModule'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -140,6 +142,10 @@ export default function GaragePage() {
         return <ClientsModule />
       case 'messages':
         return <MessagesModule />
+      case 'subscription':
+        return <SubscriptionModule />
+      case 'blog':
+        return <BlogModule variant="dark" maxPosts={6} />
       case 'settings':
         return <SettingsModule />
       default:
@@ -525,6 +531,8 @@ function getTabTitle(tab: string): string {
     chantiers: 'Chantiers',
     clients: 'Clients',
     messages: 'Messages & Support',
+    subscription: 'Abonnement',
+    blog: 'Blog',
     settings: 'Paramètres',
   }
   return titles[tab] || 'Dashboard'

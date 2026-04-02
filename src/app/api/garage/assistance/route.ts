@@ -99,6 +99,45 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PUT /api/garage/assistance - Add a reply to a ticket
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { ticketId, reply, userId } = body
+
+    if (!ticketId || !reply) {
+      return NextResponse.json(
+        { success: false, error: 'ID du ticket et message requis' },
+        { status: 400 }
+      )
+    }
+
+    // Add reply
+    const ticketReply = await db.supportTicketReply.create({
+      data: {
+        ticketId,
+        userId: userId || 'demo-user-id',
+        userRole: 'garage',
+        message: reply
+      }
+    })
+
+    // Update ticket status to in_progress
+    await db.supportTicket.update({
+      where: { id: ticketId },
+      data: { status: 'in_progress' }
+    })
+
+    return NextResponse.json({ success: true, data: ticketReply })
+  } catch (error) {
+    console.error('Erreur ajout réponse:', error)
+    return NextResponse.json(
+      { success: false, error: 'Erreur lors de l\'ajout de la réponse' },
+      { status: 500 }
+    )
+  }
+}
+
 // Demo data
 function getDemoTickets() {
   return [

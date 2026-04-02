@@ -70,6 +70,8 @@ import {
   SupportCenter,
   InsuranceComparator
 } from '@/components/okar/driver'
+import { BlogModule } from '@/components/okar/shared/BlogModule'
+import { AdsModule } from '@/components/okar/driver/AdsModule'
 
 // Types
 type HealthStatus = 'good' | 'warning' | 'critical'
@@ -542,6 +544,9 @@ export default function DriverDashboard() {
           {/* Tab: Véhicule - Dashboard complet */}
           {vehicle && activeTab === 'vehicle' && (
             <div className="space-y-6 animate-fade-in">
+              {/* Publicités */}
+              <AdsModule position="driver_dashboard_top" variant="light" maxAds={3} />
+              
               {/* Carte Santé Véhicule */}
               {vehicle && (
                 <VehicleHealthCard
@@ -944,6 +949,13 @@ export default function DriverDashboard() {
           {activeTab === 'support' && (
             <div className="animate-fade-in">
               <SupportCenter user={user} />
+            </div>
+          )}
+
+          {/* Tab: Blog */}
+          {activeTab === 'blog' && (
+            <div className="animate-fade-in">
+              <BlogModule variant="light" maxPosts={6} />
             </div>
           )}
         </div>

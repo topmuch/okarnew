@@ -34,7 +34,8 @@ import {
   ChevronRight,
   BarChart3,
   MessageCircle,
-  Shield
+  Shield,
+  BookOpen
 } from 'lucide-react'
 
 interface DriverSidebarProps {
@@ -74,6 +75,7 @@ export function DriverSidebar({
     { id: 'emergency', label: 'Urgence', icon: Zap },
     { id: 'transfer', label: 'Transfert', icon: Share2 },
     { id: 'report', label: 'Rapport', icon: FileText },
+    { id: 'blog', label: 'Blog', icon: BookOpen },
     { id: 'support', label: 'Assistance', icon: MessageCircle },
   ]
 

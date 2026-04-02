@@ -79,6 +79,7 @@ model Garage {
   badges          GarageBadge[]
   clients         GarageClient[]
   pendingActivations PendingActivation[]
+  tickets         SupportTicket[]
 
   @@index([city])
   @@index([isActive])
@@ -515,6 +516,63 @@ model BlogPost {
   @@index([category])
   @@index([publishedAt])
   @@index([authorId])
+}
+
+// ============================================================================
+// SUPPORT TICKETS - Système de support
+// ============================================================================
+model SupportTicket {
+  id              String   @id @default(cuid())
+  garageId        String
+  userId          String?
+  subject         String
+  message         String
+  status          String   @default("open")   // open, in_progress, resolved, closed
+  priority        String   @default("normal") // low, normal, high, urgent
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  resolvedAt      DateTime?
+  
+  garage          Garage   @relation(fields: [garageId], references: [id])
+  replies         SupportTicketReply[]
+  
+  @@index([garageId])
+  @@index([status])
+}
+
+model SupportTicketReply {
+  id              String   @id @default(cuid())
+  ticketId        String
+  userId          String?
+  userRole        String   // garage, superadmin
+  message         String
+  createdAt       DateTime @default(now())
+  
+  ticket          SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  @@index([ticketId])
+}
+
+// ============================================================================
+// ADVERTISEMENTS - Publicités
+// ============================================================================
+model Advertisement {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  imageUrl        String
+  linkUrl         String?
+  position        String   // garage_dashboard_top, garage_dashboard_side, driver_dashboard_top, landing_page_banner
+  isActive        Boolean  @default(true)
+  priority        Int      @default(0)
+  startDate       DateTime?
+  endDate         DateTime?
+  clickCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([position])
+  @@index([isActive])
 }
 
 // ============================================================================

@@ -22,6 +22,8 @@ import {
   Star,
   ChevronRight,
   MessageCircle,
+  CreditCard,
+  BookOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -44,6 +46,8 @@ const mainNavItems: NavItem[] = [
   { id: 'stock', label: 'Stock QR', icon: QrCode },
   { id: 'business', label: 'Business', icon: TrendingUp },
   { id: 'messages', label: 'Messages', icon: MessageCircle },
+  { id: 'subscription', label: 'Abonnement', icon: CreditCard },
+  { id: 'blog', label: 'Blog', icon: BookOpen },
 ]
 
 const bottomNavItems: NavItem[] = [
