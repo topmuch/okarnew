@@ -45,6 +45,10 @@ export default function LoginPage() {
 
       const data = await res.json()
       if (res.ok && data.success) {
+        // Store token in localStorage for client-side auth
+        if (data.data.token) {
+          localStorage.setItem('cleancheck_token', data.data.token)
+        }
         router.push('/dashboard')
       } else {
         setError(data.error || 'Identifiants incorrects.')

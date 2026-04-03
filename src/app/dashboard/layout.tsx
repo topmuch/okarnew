@@ -4,6 +4,23 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { DashboardLayout } from '@/components/dashboard-layout'
 
+interface User {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  phone?: string | null
+  role: string
+  companyId?: string | null
+  avatarUrl?: string | null
+  company?: {
+    id: string
+    name: string
+    slug: string
+    subscriptionTier: string
+  } | null
+}
+
 export default function CleanCheckDashboardLayout({
   children,
 }: {
@@ -11,14 +28,52 @@ export default function CleanCheckDashboardLayout({
 }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [mounted, setMounted] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const timer = requestAnimationFrame(() => setMounted(true))
-    return () => cancelAnimationFrame(timer)
-  }, [])
+    // Get token from localStorage
+    const token = typeof window !== 'undefined' ? localStorage.getItem('cleancheck_token') : null
 
-  if (!mounted) {
+    if (!token) {
+      router.replace('/auth/login')
+      return
+    }
+
+    let cancelled = false
+
+    // Verify token via API
+    fetch('/api/cleancheck/auth/me', {
+      headers: { 'Authorization': `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (cancelled) return
+        if (data.success && data.data) {
+          setUser(data.data)
+        } else {
+          localStorage.removeItem('cleancheck_token')
+          router.replace('/auth/login')
+        }
+      })
+      .catch(() => {
+        if (cancelled) return
+        router.replace('/auth/login')
+      })
+      .finally(() => {
+        if (cancelled) return
+        setLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [router])
+
+  const handleLogout = async () => {
+    localStorage.removeItem('cleancheck_token')
+    router.replace('/auth/login')
+  }
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -32,5 +87,7 @@ export default function CleanCheckDashboardLayout({
     )
   }
 
-  return <DashboardLayout>{children}</DashboardLayout>
+  if (!user) return null
+
+  return <DashboardLayout user={user} onLogout={handleLogout}>{children}</DashboardLayout>
 }

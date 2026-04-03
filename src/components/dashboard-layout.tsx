@@ -22,8 +22,20 @@ import {
   Bell,
   Shield,
   ChevronLeft,
-  X,
 } from 'lucide-react'
+
+interface UserData {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  role: string
+  companyId?: string | null
+  company?: {
+    name: string
+    subscriptionTier: string
+  } | null
+}
 
 interface NavItem {
   label: string
@@ -106,37 +118,30 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed?: boolean; onNavi
   )
 }
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+interface DashboardLayoutProps {
+  children: React.ReactNode
+  user: UserData
+  onLogout?: () => void
+}
+
+export function DashboardLayout({ children, user, onLogout }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
-  useEffect(() => {
-    const timer = requestAnimationFrame(() => setMounted(true))
-    return () => cancelAnimationFrame(timer)
-  }, [])
-
-  // Demo user data - in production this would come from auth context
-  const user = {
-    name: 'Marie Dupont',
-    email: 'marie@cleancheck.fr',
-    role: 'Gérant',
-    companyName: 'CleanPro Services',
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout()
+    } else {
+      router.replace('/auth/login')
+    }
   }
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-emerald-200 rounded-full" />
-          <div className="absolute w-12 h-12 border-4 border-emerald-600 rounded-full border-t-transparent animate-spin" />
-          <p className="text-gray-500 text-sm mt-2">Chargement...</p>
-        </div>
-      </div>
-    )
-  }
+  const displayName = `${user.firstName} ${user.lastName}`
+  const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase()
+  const companyName = user.company?.name || 'Mon entreprise'
+  const roleLabel = user.role === 'manager' ? 'Gérant' : user.role === 'agent' ? 'Agent' : user.role
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -203,16 +208,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-gray-200">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-emerald-100 text-emerald-700 text-sm font-semibold">
-                    {user.name.split(' ').map(n => n[0]).join('')}
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                  <p className="text-sm font-medium text-gray-900">{displayName}</p>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-xs px-1.5 py-0">
-                      {user.role}
+                      {roleLabel}
                     </Badge>
-                    <span className="text-xs text-gray-500">{user.companyName}</span>
+                    <span className="text-xs text-gray-500">{companyName}</span>
                   </div>
                 </div>
               </div>
@@ -221,7 +226,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => router.push('/auth/login')}
+                onClick={handleLogout}
                 title="Déconnexion"
               >
                 <LogOut className="h-5 w-5 text-gray-500" />
