@@ -109,3 +109,31 @@ Stage Summary:
 - Full demo data populated in database
 - All pages rendering correctly
 - Auth API functional (login, register, JWT)
+
+---
+Task ID: 11
+Agent: Super Z (Main)
+Task: Nettoyer tout le code OKAR et ne garder que CleanCheck
+
+Work Log:
+- Identified all OKAR files: pages (about, blog, cgu, confidentialite, contact, demo, garage, pending-validation, q, search, v, login, register, report), components (seo), hooks (use-service-worker, useUnreadMessages), libs (auth/auth, documentStatus, env, generateReportPDF, insuranceCalculator, mapsHelper, oilRulesDB, qr, qrcode-pdf, qrcode, scoreCalculator, vehicleClassifier), scripts, public assets (icons, logo.svg, manifest.json, sw.js, browserconfig.xml, offline.html), config files (Dockerfile, docker-compose.yml, Caddyfile, pwa.config.js, .dockerignore, .zscripts), examples, mini-services
+- Deleted all 20+ OKAR page directories, 8 OKAR lib files, 2 OKAR hooks, 2 OKAR scripts
+- Deleted 28 unused UI components (accordion, alert-dialog, carousel, drawer, form, etc.)
+- Deleted PWA config (next-pwa integration), Docker files, Caddyfile
+- Cleaned package.json: removed ~40 unused dependencies (leaflet, next-auth, next-pwa, framer-motion, zustand, mdxeditor, etc.), renamed to "cleancheck"
+- Rewrote tailwind.config.ts: removed OKAR pink/dark/luxury theme, kept CleanCheck emerald-compatible CSS variables
+- Rewrote next.config.ts: removed PWA wrapper
+- Rewrote globals.css: removed OKAR gradient/animation/neon utilities, kept CleanCheck light theme
+- Rewrote dashboard/error.tsx and dashboard/loading.tsx: replaced OKAR pink/dark theme with CleanCheck emerald
+- Rewrote README.md: CleanCheck documentation only
+- Added missing functions to auth.ts: generateQRPayload(), verifyQRPayload()
+- Recreated scoring.ts with saveQualityScore() and calculateQualityScore()
+- Fixed QR API routes to remove dependency on deleted @/lib/qr module
+- Installed missing @radix-ui/react-checkbox dependency
+- Verified production build: 0 errors, all pages compile successfully
+
+Stage Summary:
+- Removed 100% of OKAR-specific code (pages, components, libs, hooks, configs, assets)
+- Removed ~40 unused npm dependencies (from 96 to 54 dependencies)
+- Build passes cleanly with 0 errors
+- Project is now 100% CleanCheck

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyToken, generateQRPayload, generatePinCode } from '@/lib/auth'
-import { generateQRCodeImage } from '@/lib/qr'
 
 async function requireManager(req: NextRequest) {
   const token = req.cookies.get('token')?.value ||
@@ -59,11 +58,8 @@ export async function POST(
       },
     })
 
-    // Generate QR code image
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    const qrCodeImage = await generateQRCodeImage(
-      `${baseUrl}/api/cleancheck/qr/verify?token=${newQrToken}`,
-    )
+    const qrUrl = `${baseUrl}/scan/${newQrToken}`
 
     console.log(`[CleanCheck] QR code regenerated for intervention ${interventionId}`)
     console.log(`[CleanCheck] New PIN: ${newPinCode}`)
@@ -75,7 +71,7 @@ export async function POST(
         qrToken: newQrToken,
         qrPinCode: newPinCode,
         qrExpiresAt: newExpiresAt,
-        qrCodeImage,
+        qrUrl,
       },
     })
   } catch (error) {

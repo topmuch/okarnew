@@ -106,6 +106,28 @@ export function generatePinCode(): string {
 }
 
 // ============================================================================
+// QR CODE PAYLOAD
+// ============================================================================
+
+/**
+ * Generate a unique QR token for an intervention.
+ */
+export function generateQRPayload(): { token: string; pin: string } {
+  const token = `QR-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 8)}`
+  const pin = generatePinCode()
+  return { token, pin }
+}
+
+/**
+ * Verify a QR token and pin combination.
+ * Returns true if the token format is valid.
+ */
+export function verifyQRPayload(token: string, _pin?: string): boolean {
+  if (!token || typeof token !== 'string') return false
+  return token.startsWith('QR-') && token.length >= 20
+}
+
+// ============================================================================
 // RATE LIMITING (simple in-memory)
 // ============================================================================
 

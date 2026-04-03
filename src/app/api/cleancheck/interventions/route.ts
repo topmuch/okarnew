@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyToken, generateQRPayload, generatePinCode } from '@/lib/auth'
-import { generateQRCodeImage } from '@/lib/qr'
 
 async function getAuthUser(req: NextRequest) {
   const token = req.cookies.get('token')?.value ||
@@ -174,17 +173,10 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Generate QR code image
-    const qrPayload = generateQRPayload(intervention.id)
-    await db.intervention.update({
-      where: { id: intervention.id },
-      data: { qrToken: qrPayload },
-    })
-
+    // Update QR token with intervention ID
+    const qrPayload = `${intervention.qrToken}`
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    const qrDataUrl = await generateQRCodeImage(
-      `${baseUrl}/api/cleancheck/qr/verify?token=${qrPayload}`,
-    )
+    const qrUrl = `${baseUrl}/scan/${qrPayload}`
 
     // Create checklist items from template if applicable
     if (checklistTemplateId) {
@@ -218,7 +210,7 @@ export async function POST(req: NextRequest) {
         data: {
           ...intervention,
           qrToken: qrPayload,
-          qrCodeImage: qrDataUrl,
+          qrUrl,
           client,
           agent: { id: agent.id, firstName: agent.firstName, lastName: agent.lastName },
         },

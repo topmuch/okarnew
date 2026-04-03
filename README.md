@@ -1,61 +1,64 @@
-# OKAR - Passeport Numérique Automobile 🚗🇸🇳
+# CleanCheck — Plateforme SaaS pour sociétés de nettoyage
 
-## 📋 Description
+CleanCheck est la plateforme tout-en-un pour les sociétés de nettoyage professionnelles. Générez des QR codes dynamiques, suivez vos interventions en temps réel via des checklists interactives, et automatisez votre Score Qualité client.
 
-**OKAR** est le Passeport Numérique Automobile du Sénégal - une application web pour gérer l'historique complet d'un véhicule.
+## 🚀 Fonctionnalités
 
-### Fonctionnalités
+- **QR Codes dynamiques** : Générez des QR Codes uniques pour chaque intervention
+- **Checklists interactives** : Templates personnalisables, tâches avec photos et notes
+- **Score Qualité automatisé** : Évaluation client 5 étoiles, score agent automatique
+- **Dashboard manager** : Vue d'ensemble complète de l'activité
+- **Scan mobile** : Interface optimisée pour les agents sur le terrain
+- **Rapport client** : Le client scanne le QR et évalue la prestation
 
-- 🔍 Vérification de plaque
-- 📋 Carnet d'entretien numérique
-- 🏦 Réseau de garages partenaires
-- 📊 Score de santé véhicule
-- 📄 Rapports PDF (1 000 FCFA)
+## 🛠️ Tech Stack
 
-## 🚀 Déploiement Coolify
+- **Framework** : Next.js 16 (App Router)
+- **Langage** : TypeScript
+- **Base de données** : SQLite + Prisma ORM
+- **UI** : Tailwind CSS + shadcn/ui
+- **Auth** : JWT + bcryptjs
+- **Charts** : Recharts
 
-### 1. Variables d'environnement
-
-```env
-DATABASE_URL="file:/app/data/okar.db"
-NEXTAUTH_SECRET="votre-secret-ici"
-NEXTAUTH_URL="https://votre-domaine.com"
-```
-
-### 2. Déployer
-
-1. Connectez le repo GitHub à Coolify
-2. Coolify détecte le Dockerfile automatiquement
-3. Ajoutez les variables d'environnement
-4. Déployez!
-
-C'est tout! La base de données SQLite est créée automatiquement.
-
-## 🛠️ Développement local
+## 📦 Installation
 
 ```bash
-# Installer les dépendances
 npm install
-
-# Configurer l'environnement
 cp .env.example .env
-
-# Initialiser la base de données
 npx prisma db push
-npm run seed
-
-# Démarrer
+npx tsx prisma/seed-cleancheck.ts
 npm run dev
 ```
 
-## 🔐 Comptes de démonstration
+## 🔑 Identifiants de démo
 
 | Rôle | Email | Mot de passe |
-|------|-------|--------------|
-| SuperAdmin | superadmin@okar.sn | admin123 |
-| Garage | moussa.diop@autodakar.sn | password123 |
-| Driver | amadou.diouf@email.com | password123 |
+|------|-------|-------------|
+| Super Admin | superadmin@cleancheck.fr | SuperAdmin2025! |
+| Manager | marie.dupont@cleanpro.fr | Manager2025! |
+| Agent | sophie.laurent@cleanpro.fr | Agent2025! |
 
----
+## 📁 Structure
 
-Made with ❤️ in Sénégal 🇸🇳
+```
+src/
+├── app/
+│   ├── api/cleancheck/     # API REST (auth, CRUD, QR, scores)
+│   ├── auth/               # Pages de connexion/inscription
+│   ├── dashboard/          # Dashboard manager
+│   ├── scan/[token]/       # Interface agent (scan QR)
+│   └── page.tsx            # Landing page
+├── components/
+│   ├── dashboard-layout.tsx
+│   ├── data-table.tsx
+│   └── ui/                 # Composants shadcn/ui
+└── lib/
+    ├── auth.ts             # JWT, bcrypt, sessions
+    ├── db.ts               # Prisma client singleton
+    ├── scoring.ts          # Algorithme de scoring qualité
+    └── utils.ts
+```
+
+## 📄 Licence
+
+MIT
