@@ -53,7 +53,7 @@ export default function RegisterPage() {
 
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch('/api/cleancheck/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -66,10 +66,10 @@ export default function RegisterPage() {
         }),
       })
 
-      if (res.ok) {
+      const data = await res.json()
+      if (res.ok && data.success) {
         router.push('/dashboard')
       } else {
-        const data = await res.json()
         setError(data.error || 'Une erreur est survenue lors de l\'inscription.')
       }
     } catch {

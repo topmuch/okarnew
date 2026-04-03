@@ -61,6 +61,40 @@ export function verifyToken(token: string): object | null {
 }
 
 // ============================================================================
+// SESSION (DB-backed)
+// ============================================================================
+
+import db from './db'
+
+/**
+ * Create a session in DB and return a JWT token.
+ */
+export async function createSession(userId: string): Promise<string> {
+  const token = generateToken({ userId })
+
+  await db.session.create({
+    data: {
+      userId,
+      token,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    },
+  })
+
+  return token
+}
+
+/**
+ * Delete a session from DB by token.
+ */
+export async function deleteSession(token: string): Promise<void> {
+  try {
+    await db.session.deleteMany({ where: { token } })
+  } catch {
+    // Session might not exist, ignore error
+  }
+}
+
+// ============================================================================
 // PIN CODE
 // ============================================================================
 
