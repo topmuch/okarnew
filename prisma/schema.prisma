@@ -29,6 +29,9 @@ model Company {
   interventions      Intervention[]
   checklistTemplates ChecklistTemplate[]
   qualityScores      QualityScore[]
+  subscriptions      Subscription[]
+  supportTickets     SupportTicket[]
+  auditLogs          AuditLog[]
 
   @@index([slug])
   @@index([subscriptionTier])
@@ -57,7 +60,11 @@ model User {
   interventions Intervention[]  @relation("AgentInterventions")
   ratings       Rating[]        @relation("UserRatings")
   qualityScores QualityScore[]  @relation("AgentScores")
-  sessions      Session[]
+  sessions         Session[]
+  auditLogs         AuditLog[]              @relation("SuperAdminAuditLogs")
+  supportTickets    SupportTicket[]         @relation("UserTickets")
+  ticketMessages    TicketMessage[]
+  resolvedTickets   SupportTicket[]         @relation("AssignedTickets")
 
   @@index([email])
   @@index([role])
@@ -244,4 +251,173 @@ model Session {
   @@index([token])
   @@index([userId])
   @@index([expiresAt])
+}
+
+// ============================================================================
+// SUBSCRIPTION - Stripe-backed subscription management
+// ============================================================================
+model Subscription {
+  id                   String    @id @default(cuid())
+  companyId            String    @unique
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  plan                 String    @default("free") // free, starter, pro, enterprise
+  status               String    @default("trialing") // trialing, active, past_due, canceled, unpaid, paused
+  currentPeriodStart   DateTime  @default(now())
+  currentPeriodEnd     DateTime
+  trialEnd             DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  canceledAt           DateTime?
+  stripePriceId        String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // Relations
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
+
+  @@index([companyId])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@index([status])
+  @@index([plan])
+}
+
+// ============================================================================
+// INVOICE - Stripe invoice records
+// ============================================================================
+model Invoice {
+  id              String    @id @default(cuid())
+  companyId       String
+  stripeInvoiceId String    @unique
+  amount          Float
+  currency        String    @default("eur")
+  status          String    @default("draft") // draft, open, paid, uncollectible, void
+  hostedUrl       String?
+  pdfUrl          String?
+  description     String?
+  paidAt          DateTime?
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  subscriptionId  String
+
+  @@index([companyId])
+  @@index([stripeInvoiceId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// AUDIT LOG - Immutable audit trail for superadmin actions
+// ============================================================================
+model AuditLog {
+  id           String   @id @default(cuid())
+  superAdminId String
+  companyId    String?
+  action       String   // create, update, delete, login, impersonate_start, impersonate_end, config_change, flag_toggle, support_action
+  targetType   String   // company, user, subscription, invoice, config, feature_flag, support_ticket, rating
+  targetId     String?
+  before       String?  // JSON string of previous state
+  after        String?  // JSON string of new state
+  ipAddress    String?
+  userAgent    String?
+  metadata     String?  // Additional context as JSON
+  createdAt    DateTime @default(now())
+
+  // Relations
+  superAdmin User     @relation("SuperAdminAuditLogs", fields: [superAdminId], references: [id], onDelete: Restrict)
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([superAdminId])
+  @@index([companyId])
+  @@index([action])
+  @@index([targetType])
+  @@index([targetId])
+  @@index([createdAt])
+  @@index([ipAddress])
+}
+
+// ============================================================================
+// PLATFORM CONFIG - Key-value system configuration
+// ============================================================================
+model PlatformConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   // JSON string
+  label     String   // Human-readable label
+  category  String   // scoring, qr, email, sms, storage, general
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@index([category])
+  @@index([key])
+}
+
+// ============================================================================
+// FEATURE FLAG - Toggle features globally or per plan/role
+// ============================================================================
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isEnabled   Boolean  @default(true)
+  targetType  String   @default("global") // global, plan, role
+  targetValue String?  // e.g. "pro,enterprise" or "manager,superadmin"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isEnabled])
+  @@index([targetType])
+}
+
+// ============================================================================
+// SUPPORT TICKET - Support queue for platform issues
+// ============================================================================
+model SupportTicket {
+  id          String    @id @default(cuid())
+  companyId   String?
+  userId      String?   // User who created the ticket
+  subject     String
+  description String
+  status      String    @default("open") // open, in_progress, waiting, resolved, closed
+  priority    String    @default("normal") // low, normal, high, urgent
+  assignedTo  String?   // SuperAdmin user ID
+  resolution  String?
+  closedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  company      Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  user        User?          @relation("UserTickets", fields: [userId], references: [id], onDelete: SetNull)
+  assignedToUser User?        @relation("AssignedTickets", fields: [assignedTo], references: [id], onDelete: SetNull)
+  messages     TicketMessage[]
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedTo])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// TICKET MESSAGE - Messages within support tickets
+// ============================================================================
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  userId    String?  // Who wrote the message (superadmin or company user)
+  isAdmin   Boolean  @default(false) // true if written by superadmin
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([ticketId])
+  @@index([createdAt])
 }
