@@ -50,7 +50,7 @@ const DEFAULT_DASHBOARD: Record<string, string> = {
   agent: '/dashboard/agent',
 }
 
-const SESSION_COOKIE_NAME = 'cleancheck_session'
+const SESSION_COOKIE_NAME = 'token'
 
 // ============================================================================
 // HELPERS
