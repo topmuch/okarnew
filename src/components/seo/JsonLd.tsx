@@ -2,6 +2,10 @@
 
 import Script from 'next/script'
 
+// ============================================================================
+// ORGANIZATION - Pour la Homepage
+// ============================================================================
+
 interface OrganizationJsonLdProps {
   name: string
   url: string
@@ -34,15 +38,27 @@ export function OrganizationJsonLd({
     ...(description && { description }),
     ...(telephone && { telephone }),
     ...(email && { email }),
-    ...(address && { address: {
-      '@type': 'PostalAddress',
-      ...address,
-    }}),
+    ...(address && {
+      address: {
+        '@type': 'PostalAddress',
+        ...address,
+      },
+    }),
     sameAs: [
       'https://facebook.com/okarsenegal',
       'https://twitter.com/okarsenegal',
       'https://instagram.com/okarsenegal',
     ],
+    foundingDate: '2023',
+    numberOfEmployees: {
+      '@type': 'QuantitativeValue',
+      minValue: 10,
+      maxValue: 50,
+    },
+    areaServed: {
+      '@type': 'Country',
+      name: 'Sénégal',
+    },
   }
 
   return (
@@ -53,6 +69,10 @@ export function OrganizationJsonLd({
     />
   )
 }
+
+// ============================================================================
+// WEBSITE - Avec SearchAction pour le sitelinks Google
+// ============================================================================
 
 interface WebSiteJsonLdProps {
   name: string
@@ -83,6 +103,7 @@ export function WebSiteJsonLd({
         'query-input': potentialAction.queryInput || 'required name=search_term_string',
       },
     }),
+    inLanguage: 'fr',
   }
 
   return (
@@ -93,6 +114,10 @@ export function WebSiteJsonLd({
     />
   )
 }
+
+// ============================================================================
+// LOCAL BUSINESS / AUTO REPAIR - Pour les profils Garages
+// ============================================================================
 
 interface LocalBusinessJsonLdProps {
   name: string
@@ -114,6 +139,8 @@ interface LocalBusinessJsonLdProps {
   openingHours?: string[]
   priceRange?: string
   image?: string
+  ratingValue?: number
+  reviewCount?: number
 }
 
 export function LocalBusinessJsonLd({
@@ -127,8 +154,10 @@ export function LocalBusinessJsonLd({
   openingHours,
   priceRange,
   image,
+  ratingValue,
+  reviewCount,
 }: LocalBusinessJsonLdProps) {
-  const data = {
+  const data: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'AutoRepair',
     name,
@@ -150,6 +179,15 @@ export function LocalBusinessJsonLd({
     ...(openingHours && { openingHours }),
     ...(priceRange && { priceRange }),
     ...(image && { image }),
+    ...(ratingValue && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue,
+        bestRating: 5,
+        worstRating: 1,
+        ...(reviewCount && { reviewCount }),
+      },
+    }),
   }
 
   return (
@@ -161,6 +199,10 @@ export function LocalBusinessJsonLd({
   )
 }
 
+// ============================================================================
+// SERVICE - Pour les pages de services
+// ============================================================================
+
 interface ServiceJsonLdProps {
   name: string
   description: string
@@ -168,6 +210,11 @@ interface ServiceJsonLdProps {
   url: string
   serviceType?: string
   areaServed?: string
+  offers?: {
+    price: string
+    priceCurrency: string
+    availability?: string
+  }
 }
 
 export function ServiceJsonLd({
@@ -177,8 +224,9 @@ export function ServiceJsonLd({
   url,
   serviceType,
   areaServed,
+  offers,
 }: ServiceJsonLdProps) {
-  const data = {
+  const data: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Service',
     name,
@@ -189,7 +237,15 @@ export function ServiceJsonLd({
     },
     url,
     ...(serviceType && { serviceType }),
-    ...(areaServed && { areaServed }),
+    ...(areaServed && { areaServed: { '@type': 'Country', name: areaServed } }),
+    ...(offers && {
+      offers: {
+        '@type': 'Offer',
+        price: offers.price,
+        priceCurrency: offers.priceCurrency,
+        ...(offers.availability && { availability: offers.availability }),
+      },
+    }),
   }
 
   return (
@@ -200,6 +256,181 @@ export function ServiceJsonLd({
     />
   )
 }
+
+// ============================================================================
+// PRODUCT - Pour le rapport véhicule (1000 FCFA)
+// ============================================================================
+
+interface ProductJsonLdProps {
+  name: string
+  description: string
+  url: string
+  image?: string
+  price: string
+  priceCurrency: string
+  availability?: string
+  seller: string
+  aggregateRating?: {
+    ratingValue: number
+    reviewCount: number
+  }
+}
+
+export function ProductJsonLd({
+  name,
+  description,
+  url,
+  image,
+  price,
+  priceCurrency,
+  availability = 'https://schema.org/InStock',
+  seller,
+  aggregateRating,
+}: ProductJsonLdProps) {
+  const data: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name,
+    description,
+    url,
+    ...(image && { image }),
+    brand: {
+      '@type': 'Brand',
+      name: 'OKAR',
+    },
+    offers: {
+      '@type': 'Offer',
+      price,
+      priceCurrency,
+      availability,
+      seller: {
+        '@type': 'Organization',
+        name: seller,
+      },
+    },
+    ...(aggregateRating && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: aggregateRating.ratingValue,
+        bestRating: 5,
+        worstRating: 1,
+        reviewCount: aggregateRating.reviewCount,
+      },
+    }),
+  }
+
+  return (
+    <Script
+      id="product-jsonld"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  )
+}
+
+// ============================================================================
+// ARTICLE - Pour les pages du Blog
+// ============================================================================
+
+interface ArticleJsonLdProps {
+  title: string
+  description: string
+  url: string
+  image?: string
+  datePublished: string
+  dateModified?: string
+  authorName?: string
+  publisherName?: string
+  publisherLogo?: string
+}
+
+export function ArticleJsonLd({
+  title,
+  description,
+  url,
+  image,
+  datePublished,
+  dateModified,
+  authorName = 'OKAR Team',
+  publisherName = 'OKAR',
+  publisherLogo = 'https://shopqr.pro/icons/icon-512x512.png',
+}: ArticleJsonLdProps) {
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: title,
+    description,
+    url,
+    ...(image && { image }),
+    datePublished,
+    ...(dateModified && { dateModified }),
+    author: {
+      '@type': 'Organization',
+      name: authorName,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: publisherName,
+      logo: {
+        '@type': 'ImageObject',
+        url: publisherLogo,
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+    inLanguage: 'fr',
+  }
+
+  return (
+    <Script
+      id="article-jsonld"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  )
+}
+
+// ============================================================================
+// FAQ - Pour les pages FAQ (aide au référencement Featured Snippets)
+// ============================================================================
+
+interface FaqItem {
+  question: string
+  answer: string
+}
+
+interface FaqJsonLdProps {
+  faqs: FaqItem[]
+}
+
+export function FaqJsonLd({ faqs }: FaqJsonLdProps) {
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  }
+
+  return (
+    <Script
+      id="faq-jsonld"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  )
+}
+
+// ============================================================================
+// BREADCRUMB - Pour la navigation fil d'Ariane
+// ============================================================================
 
 interface BreadcrumbJsonLdProps {
   items: Array<{

@@ -40,12 +40,20 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "OKAR - Passeport Numérique Automobile au Sénégal",
-    template: "%s | OKAR",
+    default: "OKAR - Le Passeport Auto au Sénégal | Vérifiez l'Historique de Tout Véhicule",
+    template: "%s | OKAR - Le Passeport Auto au Sénégal",
   },
-  description: "Le carnet d'entretien numérique inviolable pour votre véhicule. Vérifiez l'historique de n'importe quel véhicule au Sénégal en un scan QR. #1 du passeport automobile digital.",
-  keywords: ["OKAR", "passeport automobile", "carnet entretien", "Sénégal", "voiture", "historique véhicule", "QR code", "contrôle technique", "garage", "automobile Dakar", "voiture occasion Sénégal", "vérification véhicule"],
-  authors: [{ name: "OKAR Team" }],
+  description: "OKAR est le #1 du passeport automobile au Sénégal. Vérifiez l'historique d'entretien, le kilométrage, l'assurance et le contrôle technique de tout véhicule en un scan QR. Achetez en confiance.",
+  keywords: [
+    "OKAR", "passeport automobile Sénégal", "carnet entretien numérique", "vérification véhicule",
+    "historique voiture Sénégal", "controle technique valide", "assurance auto Sénégal",
+    "achat voiture occasion Dakar", "kilométrage vérifié", "arnaque voiture",
+    "garage automobile Dakar", "voiture occasion Sénégal", "QR code auto",
+    "rapport véhicule Sénégal", "entretien voiture Afrique", "automobile Sénégal",
+    "vérifier plaque immatriculation", "carnet entretien en ligne", "mécanicien certifié Sénégal",
+    "assurance voiture Dakar", "contrôle technique auto Afrique de l'Ouest",
+  ],
+  authors: [{ name: "OKAR Team", url: "https://shopqr.pro/about" }],
   creator: "OKAR",
   publisher: "OKAR",
   
@@ -70,10 +78,10 @@ export const metadata: Metadata = {
     ],
   },
   
-  // OpenGraph
+  // OpenGraph - Optimisé pour le partage WhatsApp/Facebook
   openGraph: {
-    title: "OKAR - Passeport Numérique Automobile au Sénégal",
-    description: "Le carnet d'entretien numérique inviolable pour votre véhicule. Vérifiez l'historique de n'importe quel véhicule au Sénégal en un scan QR.",
+    title: "OKAR - Le Passeport Auto au Sénégal | Vérifiez Tout Véhicule en 1 Scan",
+    description: "Scannez un QR code pour vérifier l'historique complet d'un véhicule au Sénégal : kilométrage, entretien, assurance, contrôle technique. Protégez-vous contre l'arnaque.",
     type: "website",
     locale: "fr_SN",
     url: "https://shopqr.pro",
@@ -83,28 +91,28 @@ export const metadata: Metadata = {
         url: "https://shopqr.pro/og-image.png",
         width: 1200,
         height: 630,
-        alt: "OKAR - Passeport Numérique Automobile",
+        alt: "OKAR - Passeport Numérique Automobile au Sénégal - Vérifiez l'historique de tout véhicule",
       },
     ],
   },
   
-  // Twitter
+  // Twitter Cards - Optimisé pour l'affichage sur X
   twitter: {
     card: "summary_large_image",
-    title: "OKAR - Passeport Numérique Automobile au Sénégal",
-    description: "Le carnet d'entretien numérique inviolable pour votre véhicule.",
+    title: "OKAR - Le Passeport Auto au Sénégal",
+    description: "Vérifiez l'historique de tout véhicule au Sénégal en un scan QR. Kilométrage, entretien, assurance, contrôle technique.",
     images: ["https://shopqr.pro/og-image.png"],
   },
   
   // PWA
   manifest: "/manifest.json",
   
-  // Alternates
+  // URL canonique - Éviter le contenu dupliqué
   alternates: {
     canonical: "https://shopqr.pro",
   },
   
-  // Autres
+  // Directives robots
   robots: {
     index: true,
     follow: true,
@@ -116,7 +124,13 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  
+  // Catégorie et vérification
   category: "automotive",
+  verification: {
+    google: "89137c0360e6b581",
+  },
+  metadataBase: new URL("https://shopqr.pro"),
 };
 
 export default function RootLayout({
@@ -135,9 +149,19 @@ export default function RootLayout({
         <meta name="application-name" content="OKAR" />
         <meta name="msapplication-TileColor" content="#ff6201" />
         
+        {/* Google Search Console Verification */}
+        <meta name="google-site-verification" content="89137c0360e6b581" />
+        
+        {/* Geo Tags pour référencement local Sénégal */}
+        <meta name="geo.region" content="SN" />
+        <meta name="geo.placename" content="Dakar, Sénégal" />
+        <meta name="geo.position" content="14.6937;-17.4441" />
+        <meta name="ICBM" content="14.6937, -17.4441" />
+        
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://shopqr.pro" />
       </head>
       <body
         className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-background text-foreground`}

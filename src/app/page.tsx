@@ -40,10 +40,11 @@ import {
   Battery,
   Menu,
   X,
+  HelpCircle,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { OrganizationJsonLd, WebSiteJsonLd, ServiceJsonLd } from '@/components/seo/JsonLd'
+import { OrganizationJsonLd, WebSiteJsonLd, ServiceJsonLd, ProductJsonLd, FaqJsonLd } from '@/components/seo/JsonLd'
 
 export default function LandingPage() {
   const [searchPlate, setSearchPlate] = useState('')
@@ -116,11 +117,48 @@ export default function LandingPage() {
       />
       <ServiceJsonLd
         name="Vérification Historique Véhicule"
-        description="Vérifiez l'historique complet d'un véhicule: kilométrage, entretien, contrôles techniques"
+        description="Vérifiez l'historique complet d'un véhicule au Sénégal: kilométrage, entretien, contrôles techniques, assurance"
         provider="OKAR"
         url="https://shopqr.pro"
         serviceType="Automotive Service"
         areaServed="Sénégal"
+        offers={{
+          price: '0',
+          priceCurrency: 'XOF',
+          availability: 'https://schema.org/InStock',
+        }}
+      />
+      <ProductJsonLd
+        name="Rapport Véhicule Complet OKAR"
+        description="Rapport détaillé incluant l'historique d'entretien, le kilométrage vérifié, le statut d'assurance, le contrôle technique et le score de confiance du véhicule au Sénégal."
+        url="https://shopqr.pro/report"
+        price="1000"
+        priceCurrency="XOF"
+        seller="OKAR"
+        aggregateRating={{
+          ratingValue: 4.8,
+          reviewCount: 2500,
+        }}
+      />
+      <FaqJsonLd
+        faqs={[
+          {
+            question: "Comment vérifier l'historique d'un véhicule au Sénégal ?",
+            answer: "Avec OKAR, il suffit de scanner le QR code du véhicule ou d'entrer son numéro de plaque sur shopqr.pro pour obtenir instantanément l'historique complet d'entretien, le kilométrage vérifié, le statut d'assurance et de contrôle technique.",
+          },
+          {
+            question: "Combien coûte un rapport véhicule OKAR ?",
+            answer: "Le rapport véhicule complet OKAR coûte 1 000 FCFA. Il inclut l'historique d'entretien détaillé, le score de confiance, la vérification du kilométrage, le statut des documents officiels et l'estimation de la valeur du véhicule.",
+          },
+          {
+            question: "OKAR est-il disponible dans toutes les régions du Sénégal ?",
+            answer: "Oui, OKAR est disponible dans tout le Sénégal avec un réseau de plus de 500 garages partenaires certifiés à Dakar, Thiès, Saint-Louis, Ziguinchor, Kaolack et dans toutes les régions du pays.",
+          },
+          {
+            question: "Comment devenir garage partenaire OKAR ?",
+            answer: "Pour devenir garage partenaire OKAR, inscrivez-vous sur shopqr.pro en tant que garage. Après vérification de vos certifications et compétences, vous recevrez un badge 'Garage Certifié OKAR' et un stock de QR codes pour vos clients.",
+          },
+        ]}
       />
       
       {/* Formes organiques abstraites - Arrière-plan */}
@@ -223,15 +261,21 @@ export default function LandingPage() {
             </Badge>
             
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-bold tracking-tight mb-6">
-              <span className="block text-[#1F2937]">CHECK IN</span>
+              <span className="block text-[#1F2937]">Le Passeport Auto</span>
               <span className="block bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent">
-                AUTO
+                au Sénégal
               </span>
             </h1>
             
-            <p className="text-lg md:text-xl text-[#4B5563] max-w-2xl mx-auto leading-relaxed mb-8">
-              OKAR révolutionne la gestion automobile avec un carnet d'entretien numérique inviolable. 
-              Vérifiez l'historique de n'importe quel véhicule en un scan QR.
+            <p className="text-lg md:text-xl text-[#4B5563] max-w-2xl mx-auto leading-relaxed mb-4">
+              <strong>OKAR</strong> est le <strong>passeport numérique automobile #1 au Sénégal</strong>. 
+              Vérifiez l'<strong>historique d'entretien</strong>, le <strong>kilométrage</strong>, 
+              l'<strong>assurance</strong> et le <strong>contrôle technique</strong> de tout véhicule en un scan QR. 
+              Achetez votre <strong>voiture occasion à Dakar</strong> en toute confiance.
+            </p>
+            <p className="text-sm md:text-base text-[#6B7280] max-w-xl mx-auto mb-8">
+              Plus de <strong>50 000 véhicules</strong> suivis et <strong>500 garages certifiés</strong> dans tout le Sénégal. 
+              Protégez-vous contre l'arnaque à la voiture d'occasion.
             </p>
 
             {/* Chiffres Clés */}
@@ -579,6 +623,100 @@ export default function LandingPage() {
                   <Badge className={`bg-gradient-to-r ${service.gradient} text-white border-0 px-4 py-1.5 rounded-full font-semibold shadow-sm`}>
                     {service.price}
                   </Badge>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Villes couvertes au Sénégal */}
+      <section id="villes-couvertes" className="py-16 lg:py-20 bg-gradient-to-br from-sky-50 via-blue-50/50 to-indigo-50/30 relative">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="text-center mb-10">
+            <Badge className="bg-sky-100 text-sky-700 border border-sky-200/50 px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+              <MapPin className="h-4 w-4 mr-1.5" /> Présent dans tout le Sénégal
+            </Badge>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-[#1F2937] mb-3">
+              Nos Garages Partenaires au Sénégal
+            </h2>
+            <p className="text-[#4B5563] max-w-2xl mx-auto">
+              Trouvez un garage certifié OKAR près de chez vous pour l'entretien de votre véhicule. 
+              Chaque intervention est enregistrée dans votre carnet d'entretien numérique.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-5xl mx-auto">
+            {[
+              { city: 'Dakar', count: '200+', desc: 'Plateau, Médina, Liberté, Almadies' },
+              { city: 'Thiès', count: '60+', desc: 'Centre-ville, Keur Massar' },
+              { city: 'Saint-Louis', count: '40+', desc: 'Sud, Langue de Barbarie' },
+              { city: 'Ziguinchor', count: '35+', desc: 'Basse-Casamance' },
+              { city: 'Kaolack', count: '30+', desc: 'Sahel, Saloum' },
+            ].map((location) => (
+              <div key={location.city} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100/50 hover:shadow-lg hover:border-sky-200 transition-all duration-150 text-center group">
+                <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-blue-500 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-sky-200/50 group-hover:scale-110 transition-transform">
+                  <MapPin className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="font-bold text-[#1F2937] mb-1">{location.city}</h3>
+                <p className="text-xs font-semibold text-sky-600 mb-1">{location.count} garages</p>
+                <p className="text-[10px] text-[#6B7280]">{location.desc}</p>
+              </div>
+            ))}
+          </div>
+          
+          <div className="text-center mt-8">
+            <Link href="/register?role=garage">
+              <Button className="bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 hover:from-sky-600 hover:via-blue-600 hover:to-indigo-600 text-white shadow-lg shadow-sky-200/50 rounded-full px-8 py-3 font-semibold transition-all duration-150">
+                <Wrench className="h-4 w-4 mr-2" />
+                Votre ville n'y est pas ? Devenez partenaire
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ SEO - Section Questions Fréquentes */}
+      <section id="faq" className="py-16 lg:py-20 bg-white relative">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="text-center mb-10">
+            <Badge className="bg-emerald-100 text-emerald-700 border border-emerald-200/50 px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+              <HelpCircle className="h-4 w-4 mr-1.5" /> Questions Fréquentes
+            </Badge>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-[#1F2937] mb-3">
+              Tout savoir sur OKAR
+            </h2>
+          </div>
+          
+          <div className="max-w-3xl mx-auto space-y-4">
+            {[
+              {
+                q: "Comment vérifier l'historique d'un véhicule au Sénégal avec OKAR ?",
+                a: "Entrez simplement le numéro de plaque d'immatriculation du véhicule sur shopqr.pro ou scannez le QR code OKAR apposé sur le véhicule. Vous obtiendrez instantanément l'historique d'entretien complet, le kilométrage vérifié, le statut de l'assurance et du contrôle technique, ainsi que le score de confiance du véhicule.",
+              },
+              {
+                q: "Le rapport véhicule OKAR coûte combien ?",
+                a: "Le rapport complet coûte seulement 1 000 FCFA. Il contient l'historique détaillé de toutes les interventions, la vérification du kilométrage, les statuts assurance et contrôle technique, le score de confiance OKAR et une estimation de la valeur marchande du véhicule.",
+              },
+              {
+                q: "OKAR est-il fiable pour éviter les arnaques à la voiture d'occasion ?",
+                a: "Oui, OKAR est le système de référence au Sénégal pour lutter contre les arnaques automobiles. Chaque intervention est certifiée par un garage partenaire agréé, le kilométrage est vérifié et horodaté, et les documents officiels sont contrôlés. Le score de confiance OKAR vous donne une évaluation claire et transparente.",
+              },
+              {
+                q: "Comment inscrire mon véhicule sur OKAR ?",
+                a: "Créez un compte gratuit sur shopqr.pro en tant que propriétaire, puis ajoutez votre véhicule avec sa plaque d'immatriculation. Vous recevrez un QR code OKAR à coller sur votre pare-brise. Chaque passage au garage partenaire sera automatiquement enregistré dans votre carnet d'entretien numérique.",
+              },
+            ].map((item, index) => (
+              <Card key={index} className="border border-gray-100 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold text-[#1F2937] mb-2 flex items-start gap-2">
+                    <span className="text-amber-500 font-bold shrink-0">Q:</span>
+                    {item.q}
+                  </h3>
+                  <p className="text-[#4B5563] text-sm leading-relaxed pl-5">
+                    {item.a}
+                  </p>
                 </CardContent>
               </Card>
             ))}
